@@ -1,0 +1,67 @@
+# Site settings
+title: Tyrion Blog
+SEOTitle: 兰尼斯特的博客 | Tyrion
+header-img: image/bg.jpg
+email: tyrion.marting@hotmail.com
+description: "Every failure is leading towards success."
+keyword: "C++, Direct3D"
+url: "https://ttyrion.github.io/"  
+baseurl: ""
+github_repo: "https://github.com/ttyrion"
+
+# Sidebar settings
+sidebar: true  
+sidebar-about-description: "Goals determine what you going to be!"
+sidebar-avatar: /image/sidebar.jpg  
+
+
+# SNS settings
+RSS: false
+zhihu_username:     
+github_username:    
+facebook_username:  
+jianshu_username:   
+
+
+# Build settings
+# from 2016, 'pygments' is unsupported on GitHub Pages. Use 'rouge' for highlighting instead.
+permalink: pretty
+paginate: 10
+exclude: ["less","node_modules","Gruntfile.js","package.json","README.md"]
+anchorjs: true                          # if you want to customize anchor. check out line:181 of `post.html`
+
+
+# Gems
+# from PR#40, to support local preview for Jekyll 3.0
+gems: [jekyll-paginate]
+
+
+# Markdown settings
+# replace redcarpet to kramdown,
+# although redcarpet can auto highlight code, the lack of header-id make the catalog impossible, so I switch to kramdown
+# document: http://jekyllrb.com/docs/configuration/#kramdown
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  input: GFM                            # use Github Flavored Markdown !important
+
+
+
+# 评论系统
+# Gitalk
+gitalk:
+  enable: true    #是否开启Gitalk评论
+  clientID: 018ef29943f8ef203d82                            #生成的clientID
+  clientSecret: f0b1cae786ef5ff50f163953b12bef35e383b813    #生成的clientSecret
+  repo: ttyrion.github.io    #仓库名称
+  owner: ttyrion    #github用户名
+  admin: ttyrion
+  distractionFreeMode: true #是否启用类似FB的阴影遮罩
+
+
+# Progressive Web Apps
+chrome-tab-theme-color: "#000000"
+service-worker: true
+
+# Friends
+theme: jekyll-theme-time-machine

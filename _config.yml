@@ -3,7 +3,7 @@ title: Tyrion Blog
 SEOTitle: 兰尼斯特的博客 | Tyrion
 header-img: image/bg.jpg
 email: tyrion.marting@hotmail.com
-description: "Every failure is leading towards success."
+description: "Opportunities are only for the prepared mind!"
 keyword: "C++, Direct3D"
 url: "https://ttyrion.github.io/"  
 baseurl: ""
@@ -11,7 +11,7 @@ github_repo: "https://github.com/ttyrion"
 
 # Sidebar settings
 sidebar: true  
-sidebar-about-description: "Goals determine what you going to be!"
+sidebar-about-description: "Opportunities are only for the prepared mind!"
 sidebar-avatar: /image/sidebar.jpg  
 
 

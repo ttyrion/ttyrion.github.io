@@ -1,3 +1,14 @@
+---
+layout:     page
+title:      【Direct3D 11】关于DirectX 11 SDK的变动
+subtitle:   DirectX 11 SDK移入Windows SDK 8.x
+date:       2018-07-16
+author:     翼
+header-img: image/bg.jpg
+catalog: true
+tags:
+---
+
 # 解惑：别人的Direct3D 11 demo 可能在自己机子上build失败？  
 
 从Win8开始，DirectX SDK 被包含在了 Windows SDK中。  

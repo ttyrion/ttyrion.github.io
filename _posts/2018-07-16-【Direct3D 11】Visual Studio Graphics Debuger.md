@@ -1,6 +1,6 @@
 ---
 layout:     page
-title:      Visual Studio Graphics Debugger 
+title:      【Direct3D 11】Visual Studio Graphics Debugger 
 subtitle:   VS着色器调试
 date:       2018-07-16
 author:     翼

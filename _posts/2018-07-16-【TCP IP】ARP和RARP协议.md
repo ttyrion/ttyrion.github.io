@@ -9,14 +9,6 @@ catalog: true
 tags:
 ---
 
-# Ethernet II 以太网数据帧格式  
-
-![Ethernet II](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/tcp/Ethernet_II_Frame.png)  
-
-# ARP协议分组格式  
-
-![ARP packet](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/tcp/ARP_packet.png)  
-
 ## 数据链路层寻址
 数据链路层协议（比如上面的Ethernet II 以太网协议）有自己的寻址机制（通常是48 bit地址，比如Ethernet II中的MAC地址），任何使用链路层的网络层都必须遵从。  
 当一台使用TCP/IP协议的主机把以太网数据帧发送到位于同一局域网上的另一台主机时（不论发送方最终的目的主机是该主机，还是想让该主机负责转发），是根据48 bit的以太网地址来确定目的接口的。设备驱动程序从不检查IP数据报中的目的IP地址。
@@ -93,5 +85,10 @@ RARP服务器实现的一个复杂因素是RARP请求是在硬件层上进行广
 2. 优化：可以指定一个RARP服务器为主服务器，其他的为次服务器。主服务器发出响应不需要延迟，而次服务器发出响应则需要一个随机的延迟。
 3. 优化：指定一个主RARP服务器，其他为次服务器。次服务器只对在一个短时间段内发生的重复请求进行响应。这里假设出现重复请求的原因是由于主服务器停机了。
 
+### Ethernet II 以太网数据帧格式
+![Ethernet II](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/tcp/Ethernet_II_Frame.png)  
+
+### ARP协议分组格式
+![ARP packet](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/tcp/ARP_packet.png)  
 
 

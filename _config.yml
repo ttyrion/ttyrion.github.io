@@ -10,7 +10,7 @@ baseurl: ""
 github_repo: "https://github.com/ttyrion"
 
 # Sidebar settings
-sidebar: true  
+sidebar: false  
 sidebar-about-description: "Opportunities are only for the prepared mind!"
 sidebar-avatar: /image/sidebar.jpg  
 

@@ -53,6 +53,7 @@ $$ T_c =
   -cam_x & cam_y & -cam_z & 1 \\
 \end{pmatrix}
 $$
+![Tc](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/direct3d/camera/Tc.png)
 将场景内的物体的顶点坐标都乘以这个矩阵，即可计算出物体在相机坐标系的坐标。  
 
 1. 旋转
@@ -79,6 +80,7 @@ R_c =
 	0 & 0 & 1 \\
 \end{pmatrix}
 $$
+![get rc](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/direct3d/camera/get_Rc.png)
 
 3. 上面的关键在于：右侧是一个单位矩阵。所以我们要求的就是上面左侧矩阵的逆矩阵。还有一个关键是，左侧的矩阵是一个正交矩阵，而正交矩阵的逆矩阵就是它的转置矩阵。因此：  
 
@@ -90,6 +92,8 @@ R_c =
 	R_z & U_z & V_z \\
 \end{pmatrix}
 $$
+![rc](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/direct3d/camera/Rc.png)
+
 那么最终我们要求的世界坐标到相机坐标的转换矩阵应该是： **M** = **T_c** * **R_c**。  
 
 $$
@@ -117,6 +121,8 @@ M =
   -C*R & -C*U & -C*V & 1 \\
 \end{pmatrix}
 $$
+![M](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/direct3d/camera/M.png)
+
 上面的矩阵中：C是相机的位置向量 **(** **cam_x**,**cam_y**,**cam_z** **)**  
 R、U、V分别是相机的三个轴的方向向量。可见最终的转换矩阵 **M** 跟它们的标量积有关。  
 

@@ -194,5 +194,39 @@ Windows 8.x SDK 里面的 DirectXMath 是兼容XP的，但是, "v140_xp" 平台�
     }
    ```
    **上面的代码，其实是没有任何改动，仅仅只是把一个文件分成两个文件。**
+   这两个hlsl文件编译会在输出目录生成.cso文件：I420FramePixel.cso和I420FrameVertex.cso。这就是二进制的着色器代码，我们可以直接把它们传给CreateVertexShader和CreatePixelShader：
+   ```cpp
+    std::string pixel_shader_binary = LoadShader("I420FramePixel.cso");
+    std::string vertex_shader_binary = LoadShader("I420FrameVertex.cso");
+
+    ID3D11VertexShader* vertex_shader = NULL;
+    HRESULT hr = engine_->GetDevice()->CreateVertexShader(vertex_shader_binary.data(), vertex_shader_binary.size(), NULL, &vertex_shader);
+    FailedDirect3DDebugString(hr, false, L"create vertex shader failed.");
+    ID3D11PixelShader* pixel_shader = NULL;
+    hr = engine_->GetDevice()->CreatePixelShader(pixel_shader_binary.data(), pixel_shader_binary.size(), NULL, &pixel_shader);
+    FailedDirect3DDebugString(hr, false, L"create pixel shader failed.");
+    engine_->GetDeviceContext()->VSSetShader(vertex_shader, NULL, 0);
+    engine_->GetDeviceContext()->PSSetShader(pixel_shader, NULL, 0);
+   ```
+   上面的LoadShader，其实就是读取文件：
+   ```cpp
+    std::string LoadShader(const std::string& cso) {
+        std::string shader;
+        std::ifstream ifs;
+        ifs.open(cso, std::ios::binary | std::ios::in);
+        if (ifs.is_open()) {
+            ifs.seekg(0, std::ios_base::end);
+            int size = (int)ifs.tellg();
+            ifs.seekg(0, std::ios_base::beg);
+
+            shader.resize(size);
+            ifs.read(&shader[0], size);
+            ifs.close();
+        }
+
+        return shader;
+    }
+   ```
+   着色器的问题已经解决。
 
 至此，基于Visual Studio 2015自带的SDK开发支持XP的D3D 11应用程序的问题已经解决。剩下的是当判断出系统不支持DirectX 11（D3D_FEATURE_LEVEL_11_0）时的处理，这个就不再是疑难杂症了。

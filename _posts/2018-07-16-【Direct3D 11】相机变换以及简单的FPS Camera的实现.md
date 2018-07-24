@@ -132,33 +132,44 @@ R、U、V分别是相机的三个轴的方向向量。可见最终的转换矩�
 我给FPSCamera类定义了如下方法：
 ```cpp
 //set and get the position of the camera
+
 void SetPosition(const float x, const float y, const float z);
 DirectX::XMFLOAT3 GetPosition();
 
 //set and get the axes of the camera coordinates system
+
 void SetRight(DirectX::XMFLOAT3 right); //x-axis
+
 DirectX::XMFLOAT3 GetRight();
 
 void SetUp(DirectX::XMFLOAT3 up); //y
+
 DirectX::XMFLOAT3 GetUp();
 
 void SetLook(DirectX::XMFLOAT3 look); //z
+
 DirectX::XMFLOAT3 GetLook();
 
 //by Walk(), the camera can go forward, backward, up, down, left and right
+
 void Walk(const direction::DIRECTION direction, const float dist);
 
 //these methods control the yaw, pitch and roll of the camera
+
 void Yaw(const float angle);
 void Pitch(const float angle);
 void Roll(const float angle);
 
 //compute the new view matrix with new position, right, up, and look vector
+
 void UpdateView();
+
 //return the view matrix
+
 DirectX::XMMATRIX GetViewMatrix() const { return XMLoadFloat4x4(&view_matrix_); }
 
 //these are the member vars
+
 DirectX::XMFLOAT3 position_;
 DirectX::XMFLOAT3 right_;
 DirectX::XMFLOAT3 up_;
@@ -175,7 +186,7 @@ XMFLOAT3 FPSCamera::GetPosition() {
     return position_;
 }
 
-void FPSCamera::SetRight(XMFLOAT3 right) {//x-axis
+void FPSCamera::SetRight(XMFLOAT3 right) {
     right_ = right;
 }
 
@@ -183,7 +194,7 @@ DirectX::XMFLOAT3 FPSCamera::GetRight() {
     return right_;
 }
 
-void FPSCamera::SetUp(XMFLOAT3 up) { //y
+void FPSCamera::SetUp(XMFLOAT3 up) {
     up_ = up;
 }
 
@@ -191,7 +202,7 @@ DirectX::XMFLOAT3 FPSCamera::GetUp() {
     return up_;
 }
 
-void FPSCamera::SetLook(XMFLOAT3 look) { //z
+void FPSCamera::SetLook(XMFLOAT3 look) {
     look_ = look;
 }
 
@@ -234,7 +245,9 @@ void FPSCamera::Yaw(const float angle) {
     XMMATRIX rotation = XMMatrixRotationY(angle);
 
     //DirectXMath uses a completely wrong and misleading name.
+    
     //XMVector3TransformNormal transforms 3D directions (w-coordinate is implicitly set to 0).
+    
     XMStoreFloat3(&right_, XMVector3TransformNormal(XMLoadFloat3(&right_), rotation));
     XMStoreFloat3(&up_, XMVector3TransformNormal(XMLoadFloat3(&up_), rotation));
     XMStoreFloat3(&look_, XMVector3TransformNormal(XMLoadFloat3(&look_), rotation));
@@ -243,6 +256,7 @@ void FPSCamera::Yaw(const float angle) {
 
 void FPSCamera::Pitch(const float angle) {
     //XMMatrixRotationX
+    
     XMMATRIX rotation = XMMatrixRotationAxis(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), angle);
     XMStoreFloat3(&up_, XMVector3TransformNormal(XMLoadFloat3(&up_), rotation));
     XMStoreFloat3(&look_, XMVector3TransformNormal(XMLoadFloat3(&look_), rotation));
@@ -255,6 +269,7 @@ void FPSCamera::Roll(const float angle) {
 }
 
 //关键在于UpdateView，这里根据上面求出的转换矩阵M来计算view matrix
+
 void FPSCamera::UpdateView() {
     XMVECTOR right = XMLoadFloat3(&right_);
     XMVECTOR up = XMLoadFloat3(&up_);
@@ -262,6 +277,7 @@ void FPSCamera::UpdateView() {
     XMVECTOR position = XMLoadFloat3(&position_);
 
     //对三个向量进行正交化以及归一化:因为计算过程会有些误差
+    
     right = XMVector3Normalize(XMVector3Cross(up, look));
     up = XMVector3Normalize(XMVector3Cross(look, right));
     look = XMVector3Normalize(look);

@@ -61,6 +61,7 @@ Windows 8.x SDK 里面的 DirectXMath 是兼容XP的，但是, "v140_xp" 平台�
       //matrix world;
       //matrix view;
       //matrix projection;
+      
       matrix mvp;
    };
 
@@ -89,6 +90,7 @@ Windows 8.x SDK 里面的 DirectXMath 是兼容XP的，但是, "v140_xp" 平台�
       //output.position = mul(output.position, world);
       //output.position = mul(output.position, view);
       //output.position = mul(output.position, projection);
+      
       output.position = mul(output.position, mvp);
 
       output.color = input.color;
@@ -111,6 +113,7 @@ Windows 8.x SDK 里面的 DirectXMath 是兼容XP的，但是, "v140_xp" 平台�
       float b = y + 2.03f * u;
 
       //return float4(input.color.r, input.color.g, input.color.b, 1.0f);
+      
       return float4(r, g, b, 0.0f);
    }
    ```
@@ -124,6 +127,7 @@ Windows 8.x SDK 里面的 DirectXMath 是兼容XP的，但是, "v140_xp" 平台�
          //matrix world;
          //matrix view;
          //matrix projection;
+         
          matrix mvp;
      };
 
@@ -152,6 +156,7 @@ Windows 8.x SDK 里面的 DirectXMath 是兼容XP的，但是, "v140_xp" 平台�
          //output.position = mul(output.position, world);
          //output.position = mul(output.position, view);
          //output.position = mul(output.position, projection);
+         
          output.position = mul(output.position, mvp);
 
          output.color = input.color;
@@ -190,6 +195,7 @@ Windows 8.x SDK 里面的 DirectXMath 是兼容XP的，但是, "v140_xp" 平台�
         float b = y + 2.03f * u;
 
         //return float4(input.color.r, input.color.g, input.color.b, 1.0f);
+        
         return float4(r, g, b, 0.0f);
     }
    ```

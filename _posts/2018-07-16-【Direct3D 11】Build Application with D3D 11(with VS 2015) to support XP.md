@@ -32,13 +32,13 @@ tags:
 无奈，公司的项目不得不使用“v140_xp”以便继续支持XP，并且尝试使用Direct3D 11 渲染视频（属于小项目，顺便给之后的大项目积累经验）。
 
 #基于 Windows SDK 7.1A 开发 Direct3D 11 遇到的问题
-1. **找不到DirectXMath.h**
+1. **找不到DirectXMath.h**  
 Windows 8.x SDK 里面的 DirectXMath 是兼容XP的，但是, "v140_xp" 平台工具集的包含路径中并没有 DirectXMath。但是微软已经将DirectXMath开源道[这里，GitHub](https://github.com/Microsoft/DirectXMath)上，所以我们可以直接到GitHub上Clone一份到本地，把头文件复制到我们的项目中。
-2. **找不到d3dcompiler.h，没有D3DCompileFromFile等API可以调用**
+2. **找不到d3dcompiler.h，没有D3DCompileFromFile等API可以调用**  
 既然不能调用API编译着色器，我们能想到的当然是不编译就好了。确实，我们可以不用API编译，让开发工具替我们编译好。编译HLSL的工具是fxc.exe,但是无奈，"v140_xp" 平台工具集的包含路径中依然找不到它。
 可以把Windows SDK 8.0的可执行文件路径（比如"C:\Program Files (x86)\Windows Kits\8.0\bin\x86"）总的fxc.exe 和 d3dcompiler_46.dll拷贝到项目某个子目录如tools中，并把tools目录设置到项目的可执行文件包含路径中。
-3. **着色器代码编译失败**
-使用fxc.exe编译着色器后，着色器代码文件得做一些改动了。之前使用D3DCompileFromFile在运行时编译着色器时：
+3. **着色器代码编译失败**  
+如果要改为使用fxc.exe编译着色器，着色器代码文件得做一些改动了。之前使用D3DCompileFromFile在运行时编译着色器时：
    ```cpp
    ID3DBlob* vertex_shader_blob = NULL;
    ID3DBlob* pixcel_shader_blob = NULL;

@@ -11,29 +11,25 @@ tags:
 
 ## DNS的CNAME RR：域名重定向
 CNAME被称为“规范名字”，可以认为是一个别名或者域名重定向。
-比如：
-C:\Users\santiago>nslookup
-默认服务器:  UnKnown
-Address:  ***
-
-\> set type=a
-\> www.iqiyi.com
-服务器:  UnKnown
-Address:  ***
-
-非权威应答:
-名称:    static.dns.iqiyi.com
-Addresses:  ***
-Aliases:  www.iqiyi.com
-
-\> vodguide.pps.iqiyi.com
-服务器:  UnKnown
-Address:  ***
-
-非权威应答:
-名称:    static.dns.iqiyi.com
-Addresses:  ***
-Aliases:  vodguide.pps.iqiyi.com
+比如：  
+C:\Users\santiago>nslookup  
+默认服务器:  UnKnown  
+Address:  ***  
+\> set type=a  
+\> www.iqiyi.com  
+服务器:  UnKnown  
+Address:  ***  
+非权威应答:  
+名称:    static.dns.iqiyi.com  
+Addresses:  ***  
+Aliases:  www.iqiyi.com  
+\> vodguide.pps.iqiyi.com  
+服务器:  UnKnown  
+Address:  ***  
+非权威应答:  
+名称:    static.dns.iqiyi.com  
+Addresses:  ***  
+Aliases:  vodguide.pps.iqiyi.com  
 
 上面的例子可以看出，www.iqiyi.com和vodguide.pps.iqiyi.com都是static.dns.iqiyi.com的一个别名。
 就是说，用户访问www.iqiyi.com或者vodguide.pps.iqiyi.com，实际上最后都访问的是static.dns.iqiyi.com。

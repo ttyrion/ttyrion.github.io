@@ -12,18 +12,18 @@ tags:
 ## DNS的CNAME RR：域名重定向
 CNAME被称为“规范名字”，可以认为是一个别名或者域名重定向。
 比如：  
-C:\Users\santiago>nslookup  
+C:\Users\santiago>**nslookup**  
 默认服务器:  UnKnown  
 Address:  ***  
-\> set type=a  
-\> www.iqiyi.com  
+\> **set type=a**  
+\> **www.iqiyi.com**  
 服务器:  UnKnown  
 Address:  ***  
 非权威应答:  
 名称:    static.dns.iqiyi.com  
 Addresses:  ***  
 Aliases:  www.iqiyi.com  
-\> vodguide.pps.iqiyi.com  
+\> **vodguide.pps.iqiyi.com**  
 服务器:  UnKnown  
 Address:  ***  
 非权威应答:  

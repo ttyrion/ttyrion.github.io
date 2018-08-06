@@ -14,21 +14,21 @@ CNAME被称为“规范名字”，可以认为是一个别名或者域名重定
 比如：  
 C:\Users\santiago>**nslookup**  
 默认服务器:  UnKnown  
-Address:  ***  
+Address:  ...  
 \> **set type=a**  
 \> **www.iqiyi.com**  
 服务器:  UnKnown  
-Address:  ***  
+Address:  ...  
 非权威应答:  
 名称:    static.dns.iqiyi.com  
-Addresses:  ***  
+Addresses:  ...  
 Aliases:  www.iqiyi.com  
 \> **vodguide.pps.iqiyi.com**  
 服务器:  UnKnown  
-Address:  ***  
+Address:  ...  
 非权威应答:  
 名称:    static.dns.iqiyi.com  
-Addresses:  ***  
+Addresses:  ...  
 Aliases:  vodguide.pps.iqiyi.com  
 
 上面的例子可以看出，www.iqiyi.com和vodguide.pps.iqiyi.com都是static.dns.iqiyi.com的一个别名。

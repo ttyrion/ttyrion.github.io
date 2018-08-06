@@ -39,7 +39,7 @@ Aliases:  vodguide.pps.iqiyi.com
 就是说，用户访问www.iqiyi.com或者vodguide.pps.iqiyi.com，实际上最后都访问的是static.dns.iqiyi.com。
 而访问static.dns.iqiyi.com，就会走爱奇艺的CDN网络。
 
-##CDN网络
+## CDN网络
 CDN网络对域名解析过程是进行调整了的。CDN提供服务的原理可以概括为以下几步：
 1. 域名重定向
 就如上面说到的，www.iqiyi.com和vodguide.pps.iqiyi.com都被重定向到static.dns.iqiyi.com。

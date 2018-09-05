@@ -30,7 +30,8 @@ pop-up 窗口是一种特殊类型的 overlapped 窗口，用于 dialog boxes, m
 的 overlapped 窗口一样。
 调用 CreateWindowEx 并制定 WS_POPUP，即可创建一个 pop-up 窗口。 还可以同时指定 WS_CAPTION， 以便让窗口包含一个标题栏。指定 WS_POPUPWINDOW 风格可以创建一个包含边框和菜单的 pop-up 窗口。必须同时指定 WS_POPUPWINDOW 和 WS_CAPTION 才能让窗口菜单可见。
 ```
-鉴于pop-up窗口的特性，使用duilib界面库的应用程序通常都用 Pop-up 窗口作为主窗口，创建窗口的时候指定  WS_POPUP ，但不需要指定 WS_POPUPWINDOW 或 WS_CAPTION。因为我们通常用自绘的菜单，以及自定义的标题栏（区域）。
+鉴于pop-up窗口的特性，使用duilib界面库的应用程序通常都用 Pop-up 窗口作为主窗口，创建窗口的时候指定  WS_POPUP ，
+但不需要指定 WS_POPUPWINDOW 或 WS_CAPTION。因为我们通常用自绘的菜单，以及自定义的标题栏（区域）。
 ```
 
 ### Child Windows

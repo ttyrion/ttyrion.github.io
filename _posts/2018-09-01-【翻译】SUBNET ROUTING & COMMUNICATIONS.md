@@ -11,6 +11,6 @@ tags:
 
 # 前言
 
->这篇文章介绍了子网之间的通信方式，比较有意思。原文链接在[这里][http://www.firewall.cx/networking-topics/protocols/ip-subnetting/170-subnetting-routing.html]
+>这篇文章介绍了子网之间的通信方式，比较有意思。原文链接在[这里](http://www.firewall.cx/networking-topics/protocols/ip-subnetting/170-subnetting-routing.html)
 
 

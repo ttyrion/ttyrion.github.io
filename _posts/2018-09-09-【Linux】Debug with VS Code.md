@@ -52,6 +52,7 @@ VS Code 通过一个 tasks.json 文件来 build 项目代码。创建 tasks.json
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
     "version": "2.0.0",
+    
     "tasks": [
         {
             "label": "Build Sample",
@@ -68,8 +69,8 @@ Build Code 这一步结果如下图：
 
 ### 三、Debugging Code
 要调试代码，还需要创建一个 launch.json 文件。这个文件主要是告诉 VS Code，如何启动调试：比如启动什么调试器，调试的进程的程序文件路径，调试前还需要执行什么"task"等等。
-1. 点击左侧工具栏中的"Debug"图标（一个圆圈中间包围了一只臭虫，挺形象的一个图标），切换到Debug视图。
-2. 点击工具栏右边浏览区域右上角的设置按钮，选择 **C++ (GDB/LLDB)**（使用GDB或者LLDB），这会创建一个 launch.json 文件。这个文件可以配置两种调试方式：**C++ Launch** 或者 **C++ Attach**。
+1. 点击左侧**Activity Bar**中的"Debug"图标（一个圆圈中间包围了一只臭虫，挺形象的一个图标），切换到 Debug **Side Bar**。
+2. 点击 Debug **Side Bar**右上角的设置按钮，选择 **C++ (GDB/LLDB)**（使用GDB或者LLDB），这会创建一个 launch.json 文件。这个文件可以配置两种调试方式：**C++ Launch** 或者 **C++ Attach**。
 3. 修改 "program"的值为要调试的程序文件路径。
 4. 如果想要每次调试之前都Build一下项目，就可以给launch.json文件增加一个 "preLaunchTask" 属性，它的值配置成某个Build任务的名称，例如上面的 tasks.json 中配置的那个
 building task 的"label"属性的值"Build Sample"。

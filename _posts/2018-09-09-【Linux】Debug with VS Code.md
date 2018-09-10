@@ -74,7 +74,7 @@ Build Code 这一步结果如下图：
 4. 如果想要每次调试之前都Build一下项目，就可以给launch.json文件增加一个 "preLaunchTask" 属性，它的值配置成某个Build任务的名称，例如上面的 tasks.json 中配置的那个
 building task 的"label"属性的值"Build Sample"。
 修改后的launch.json文件内容如下：
-```json
+```JavaScript
 {  
     "version": "0.2.0",  
     "configurations": [  

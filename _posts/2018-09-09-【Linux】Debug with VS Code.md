@@ -76,9 +76,6 @@ building task 的"label"属性的值"Build Sample"。
 修改后的launch.json文件内容如下：
 ```json
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {

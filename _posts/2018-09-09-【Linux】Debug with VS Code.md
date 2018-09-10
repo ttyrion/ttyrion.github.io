@@ -30,7 +30,7 @@ VS Code 通过一个 tasks.json 文件来 build 项目代码。创建 tasks.json
 3. 选择**Others**，创建一个运行外部命令的Build任务。至此，从 VS Code 左侧浏览区域可以看到，我们的 SAMPLE 目录下面多了一个 ".vscode" 目录，该目录下包含一个 tasks.json 文件。实际上，VS Code 确实在
 我们的SAMPLE代码目录中创建了一个名为".vscode"的隐藏目录。
 4. 修改默认的 tasks.json 文件。默认的tasks.json文件内容如下：  
-```json
+```JavaScript
 {
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
@@ -47,7 +47,7 @@ VS Code 通过一个 tasks.json 文件来 build 项目代码。创建 tasks.json
 "label"可以认为是一个task的名字，后面启动这个task的时候就需要指定task的label，因此我们这里修改 "label" 的值为 "Build Sample"。
 "command"是这个task要执行的外部命令，我这里直接改成 "make", 因为我的sample项目是通过 make 管理的，**build**过程只需要执行 make Makefile。
 改过的tasks.json文件如下：
-```json
+```JavaScript
 {
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format

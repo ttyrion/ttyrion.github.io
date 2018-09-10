@@ -75,31 +75,31 @@ Build Code 这一步结果如下图：
 building task 的"label"属性的值"Build Sample"。
 修改后的launch.json文件内容如下：
 ```json
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "(gdb) Launch",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/sample",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": true,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "preLaunchTask": "Build Sample"
-        }
-    ]
-}
+{  
+    "version": "0.2.0",  
+    "configurations": [  
+        {  
+            "name": "(gdb) Launch",  
+            "type": "cppdbg",  
+            "request": "launch",  
+            "program": "${workspaceFolder}/bin/sample",  
+            "args": [],  
+            "stopAtEntry": false,  
+            "cwd": "${workspaceFolder}",  
+            "environment": [],  
+            "externalConsole": true,  
+            "MIMode": "gdb",  
+            "setupCommands": [  
+                {  
+                    "description": "Enable pretty-printing for gdb",  
+                    "text": "-enable-pretty-printing",  
+                    "ignoreFailures": true  
+                }  
+            ],  
+            "preLaunchTask": "Build Sample"  
+        }  
+    ]  
+}  
 ```
 
 最终的调试界面如图：  

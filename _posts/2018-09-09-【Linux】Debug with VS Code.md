@@ -66,6 +66,28 @@ VS Code 通过一个 tasks.json 文件来 build 项目代码。创建 tasks.json
 Build Code 这一步结果如下图：  
 ![Build Code](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/linux/vscode/tasks.png)  
 
+**另外，如果只是想要Build代码，而不是直接启动调试，可以把上面的tasks中的task增加到 build group 中，之后就可以在命令行面板中执行 Tasks: Run Build Task 来 Build 项目（即执行一个task）。
+当然，也可以用快捷方式：Ctrl+Shift+B。**  
+build group 配置如下：  
+```JavaScript
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    
+    "tasks": [
+        {
+            "label": "Build Sample",
+            "type": "shell",
+            "command": "make",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
+```
 
 ### 三、Debugging Code
 要调试代码，还需要创建一个 launch.json 文件。这个文件主要是告诉 VS Code，如何启动调试：比如启动什么调试器，调试的进程的程序文件路径，调试前还需要执行什么"task"等等。

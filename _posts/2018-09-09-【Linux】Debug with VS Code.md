@@ -127,3 +127,10 @@ building task 的"label"属性的值"Build Sample"。
 
 最终的调试界面如图：  
 ![Debugging Code](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/linux/vscode/debugging.png)  
+
+### 补充技巧
+#### 技巧一
+每次build时，输出的日志（我这里是make的输出）会附加在VS Code 下方Terminal区域后面，即输出日志是累加的，这会影响我们查看build日志的效率，因此如果能每次build前先清空前面的输出日志就好了。
+办法很简单，在build task的配置中执行build命令前加一个clear命令即可。比如，可以把上面的build task的配置"command": "make"，改为 "command": "clear && make"。
+
+

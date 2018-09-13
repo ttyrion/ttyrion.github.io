@@ -15,9 +15,9 @@ tags:
 
 ## Linux 怎么处理信号？
 1. 系统给进程递送信号signo，并调用信号处理函数sig_handler。
-2. 进入sig_handler后，signo信号被自动加入进程的信号屏蔽字中。这阻止再次产生的信号signo中断sig_handler的调用。
+2. 进入sig_handler后，signo**信号被自动加入进程的信号屏蔽字中**。这阻止再次产生的信号signo中断sig_handler的调用。
 3. 执行sig_handler内的代码。
-4. sig_handler内的代码执行完毕，系统恢复进程的信号屏蔽字，信号signo不再被阻塞。
+4. sig_handler内的代码执行完毕，**系统恢复进程的信号屏蔽字**，信号signo不再被阻塞。
 5. 进程回到产生信号的地方继续执行。
 
 如下是一段测试代码：  
@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
 ```cpp
 //TerminalA
 
-marting@192:~/github/Linux/APUE3/signal/sample/bin> ./sample 
+marting@192:~/signal/sample/bin> ./sample 
 [main]:SIGINT blocked? 0
 [main]> Hello
 [main]:Hello
@@ -98,10 +98,10 @@ marting@192:~/github/Linux/APUE3/signal/sample/bin> ./sample
 ```cpp
 //TerminalB
 
-marting@192:~/github/Linux/APUE3/signal/sample/bin> ps -eH | grep sample 
+marting@192:~/signal/sample/bin> ps -eH | grep sample 
  7551 pts/1    00:00:00         sample
-marting@192:~/github/Linux/APUE3/signal/sample/bin> kill -s SIGINT 7551
-marting@192:~/github/Linux/APUE3/signal/sample/bin> 
+marting@192:~/signal/sample/bin> kill -s SIGINT 7551
+marting@192:~/signal/sample/bin> 
 ```
 
 再看 TerminalA 输出，以下只列出每个Terminal内容的更新。  
@@ -118,11 +118,11 @@ marting@192:~/github/Linux/APUE3/signal/sample/bin>
 ```cpp
 //TerminalB
 
-marting@192:~/github/Linux/APUE3/signal/sample/bin> kill -s SIGINT 7551
-marting@192:~/github/Linux/APUE3/signal/sample/bin> kill -s SIGINT 7551
-marting@192:~/github/Linux/APUE3/signal/sample/bin> kill -s SIGINT 7551
-marting@192:~/github/Linux/APUE3/signal/sample/bin> kill -s SIGINT 7551
-marting@192:~/github/Linux/APUE3/signal/sample/bin> 
+marting@192:~/signal/sample/bin> kill -s SIGINT 7551
+marting@192:~/signal/sample/bin> kill -s SIGINT 7551
+marting@192:~/signal/sample/bin> kill -s SIGINT 7551
+marting@192:~/signal/sample/bin> kill -s SIGINT 7551
+marting@192:~/signal/sample/bin> 
 ```
 在 TerminalB 中，一次性给进程发送了四个 SIGINT 信号。但是 TerminalA 并没有任何输出，因为信号处理函数 on_sigint 仍被阻塞。
 现在在 TerminalA 中输入Hello，恢复信号处理函数 on_sigint 的执行。  
@@ -176,7 +176,7 @@ else {
 ```cpp
 //TerminalA
 
-marting@192:~/github/Linux/APUE3/signal/sample/bin> ./sample 
+marting@192:~/signal/sample/bin> ./sample 
 [main]first setjmp.
 [main]:SIGINT blocked? 0
 [main]> [on_sigint]:SIGINT catched. 

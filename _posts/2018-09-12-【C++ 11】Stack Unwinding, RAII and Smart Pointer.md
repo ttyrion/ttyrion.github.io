@@ -22,8 +22,8 @@ tags:
 ```cpp
 class Test {
 public:
-    Test(int m) { 
-        m_ = m; 
+    Test(int m) {
+        m_ = m;
     }
     ~Test() {
         std::cout << "Test desturcted." << std::endl;
@@ -56,7 +56,7 @@ catch (std::exception& e)
 当退出一个代码块（一个作用域）时，不论是由于 return，还是到达作用域结尾（reaching the end of the scope）, 还是有抛出了异常，作用域内的一切都会被销毁（即所有对象的析构函数会被调用）。
 这个调用析构函数销毁局部对象的过程就称为 **"stack unwinding"** 。同时，因为存在 **"stack unwinding"** ，这就要求我们的类的析构函数里面不要抛出异常。原因之一是C++要求在已经被抛出的
 异常被处理完之前，不能再抛出新的异常。原因之二，是在栈回溯过程中，析构函数抛出异常，会导致一种未定义的行为。也就是说，不论栈回溯是因为异常引起，还是因为离开一个作用域，我们都不能
-在析构函数中抛出异常。如要一个函数不抛出异常，可以在函数后加 noexcept 声明。  
+在析构函数中抛出异常。如要一个函数不抛出异常，可以在函数后加 **noexcept** 声明，此时编译器会对函数里面的 throw 提示 **waring**。  
 **"stack unwinding"** 还引出了一个C++技术，称为 **RAII**（Resource Acquisition Is Initialization），来帮助开发者管理内存资源，数据库连接，或者打开的文件描述符等等。
 
 ## RAII (Resource Acquisition Is Initialization)
@@ -107,7 +107,7 @@ std::shared_ptr 的引用计数为强引用，比如 "pt2 = shared_ptr {m_=1 } [
 #### 资源释放 by std::shared_ptr
 std::shared_ptr 默认会调用 delete 来释放其所引用的对象，但是我们也可以指定一个销毁操作。比如：
 ```cpp
-    std::shared_ptr<Test> pt(new Test[3], 
+    std::shared_ptr<Test> pt(new Test[3],
         [](Test* arg) {
             delete[] arg;
         }
@@ -160,26 +160,3 @@ std::unique_ptr<Test[]> upt(new Test[3]);
 ```
 像上面那样，unique_ptr可以管理一个数组，但是不需要跟shared_ptr一样，由开发者提供一个合适的释放操作。
 **注意，对于std::unique_ptr，要明确的一点是：它不提供copy语义，因而跟auto_ptr一样，不能被用在标准库容器中。**
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

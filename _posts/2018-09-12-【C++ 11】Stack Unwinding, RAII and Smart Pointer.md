@@ -29,6 +29,9 @@ public:
 
     int m_ = 0;
 };
+```
+
+```
 void TestFun(int m) {
     throw std::exception("test exception.");
 }

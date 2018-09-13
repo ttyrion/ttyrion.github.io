@@ -18,6 +18,7 @@ tags:
 1. 在一大块代码之后忘了 delete，不过如果我们习惯在敲完new之后紧接着敲delete，再在delete前插入其它代码的话，“忘记delete”就是一个不成问题的问题。
 2. 代码执行起来，可能由于某种运行时原因，不会走到我们敲的delete。下面会举例子。  
 
+测试代码：  
 ```cpp
 class Test {
 public:
@@ -30,9 +31,7 @@ public:
 
     int m_ = 0;
 };
-```
 
-```
 void TestFun(int m) {
     throw std::exception("test exception.");
 }

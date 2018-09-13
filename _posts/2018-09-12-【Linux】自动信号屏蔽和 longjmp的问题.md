@@ -137,9 +137,9 @@ marting@192:~/signal/sample/bin>
 [on_sigint]>
 ```
 从 TerminalA 的输出可以看出，信号处理函数 on_sigint 刚执行完，又被再次调用并且阻塞。因为在 on_sigint 第一次阻塞的过程中，
-我们给进程发送了四个 SIGINT 信号，此时SIGINT信号被进程屏蔽，处于未决状态，等待内核将信号递送给进程。所以 on_sigint 第一次
-执行完毕后，进程再次被信号中断，进入信号处理函数中（同时可以看到，SIGINT信号此时也再次被加入进程信号屏蔽字）。在 TerminalA 
-中输入Hello2,再次恢复 on_sigint 的执行：  
+我们给进程发送了四个 SIGINT 信号，此时SIGINT信号被进程屏蔽，处于未决状态，等待内核将信号递送给进程。on_sigint 第一次
+执行完毕后，系统恢复了进程的信号屏蔽字，因而未决的信号SIGINT被递送给进程。进程再次被信号中断，进入信号处理函数中
+（同时可以看到，SIGINT信号此时再次被加入进程信号屏蔽字）。在 TerminalA 中输入Hello2,再次恢复 on_sigint 的执行：  
 ```cpp
 //TerminalA
 

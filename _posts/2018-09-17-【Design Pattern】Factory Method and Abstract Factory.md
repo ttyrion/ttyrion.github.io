@@ -1,7 +1,7 @@
 ---
 layout:     page
 title:      【Design Pattern】Factory Method and Abstract Factory
-subtitle:   Factory Method and Abstract Factory: definitions and differences.
+subtitle:   Factory Method and Abstract Factory - definitions and differences.
 date:       2018-09-17
 author:     翼
 header-img: image/bg.jpg

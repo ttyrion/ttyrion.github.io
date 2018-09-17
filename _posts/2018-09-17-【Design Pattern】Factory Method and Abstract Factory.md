@@ -65,7 +65,7 @@ public:
 1. 代码复用性太差，旧得CreateUI()中的代码没有任何复用，而新增的CreateScrollingUI()的逻辑其实与CreateUI()基本一致。
 2. UI Framework 和 UI Components 具体类之间是强耦合(tightly coupled)关系：CUIFrameWork 不得不改动，以便替换一个具体的 UI Component。
 
-## 采用工程模式的解决方案
+## 采用工厂模式的解决方案
 ### 采用 Factory Method
 当应用工厂方法模式时，我们将创建具体组件对象的代码抽象成一个虚函数。现在，主要的框架类 CUIFrameWork，只处理创建组件的接口，实际创建组件的任务，交给 CUIFrameWork 的子类的实例。这就是上面《GOF》定义中的“Factory Method lets a class **defer** instantiation to subclasses”：真正的对象创建工作被延迟。现在，我们的代码可能是这样的：  
 ```cpp

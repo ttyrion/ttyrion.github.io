@@ -15,8 +15,8 @@ tags:
 
 ## Definitions
 先看看来自《GOF》的定义。  
-**Factory Method: ** Define an interface for creating an object, but let subclasses decide which class to instantiate. Factory Method lets a class defer instantiation to subclasses.  
-**Abstract Factory: ** Provide an interface for creating families of related or dependent objects without specifying their concrete classes.  
+**Factory Method:** Define an interface for creating an object, but let subclasses decide which class to instantiate. Factory Method lets a class defer instantiation to subclasses.  
+**Abstract Factory:** Provide an interface for creating families of related or dependent objects without specifying their concrete classes.  
 仔细分析上面的定义，能得出一个结论是，两者最大的不同之处在于，他们的关键点是 **继承(inheritance)** 还是 **组合(composition)**。后面结合代码，可以更明显地看出这一点。
 
 ## 不用任何工厂模式的代码

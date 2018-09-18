@@ -54,38 +54,6 @@ int main()
 1. static_cast不仅支持upcast，还支持downcast，但是没有运行时类型检查。**dynamic_cast提供安全的downcast。**
 2. static_cast不仅支持把T*指针转换为void*，反过来也可以把void*转换为T*，同样也没有运行时类型检查。
 
-## reinterpret_cast
-C++的 reinterpret_cast 是低层次的转换（在二进制位层面上），并且依赖于具体实现，因此是不可移植的。  
-reinterpret_cast跟C的强制类型转换(T*)(expression)很像。看这个名字中的**interpret**，什么意思？“解释”。也就是说，这个转换就是把当前某个对象S当做另一个对象D来解释，根本不管 S 和 D 是什么关系。
-那么可以看出reinterpret_cast有两个特点：
-1. 对参与转换的两个对象类型没有要求。注意是对类型没有要求，reinterpret_cast 也不能去掉被转换对象的const属性。
-2. 因为第1点，reinterpret_cast很危险。除非很明确自己的目的，否则不应该用它。 
- 
-```cpp
-class A {
-public:
-    int x = 0x41;
-    int y = 0x42;
-};
-
-int main()
-{
-    int i = 10;
-    A* pa = reinterpret_cast<A*>(&i);    //OK, pa->x : 10, pa->y : -858993460(显然，这是一个随机的，没被初始化的值)
-    
-    std::string* ps1 = reinterpret_cast<std::string*>(&a);  //OK
-    
-    std::string* ps2 = (std::string*)(&a);                  //OK
-    
-    std::string str = *ps;                                  //Crash
-    
-    
-    return 0;
-}
-
-```
-正如上面的示例代码，reinterpret_cast可以把A类型的对象a，转换为一个完全不相关的字符串string类型对象。这个转换不会有问题，因为reinterpret_cast不会做什么检查，也不会对被转换对象做任何改动。可以认为它只是一个说明，说明我们要把那个对象（那块内存）当做新类型的对象来处理。然而，正因为reinterpret_cast不做任何改动，仅仅只是一个“重新解释那块内存”的说明，随后对新对象的访问就会造成崩溃：因为那个对象根本不是std::string。
-
 
 ## dynamic_cast
 dynamic_cast有运行时类型检查，用于提供安全的downcast转换：判断一个对象是否是继承层次中的一个特定类型对象。或者简单来说就是，判断一个基类对象是否是一个特定子类的对象。当然，dynamic_cast也支持upcast。**需要注意，dynamic_cast也是唯一一个有较显著的性能损失的转换行为。**
@@ -127,6 +95,39 @@ int main()
     return 0;
 }
 ```
+
+## reinterpret_cast
+C++的 reinterpret_cast 是低层次的转换（在二进制位层面上），并且依赖于具体实现，因此是不可移植的。  
+reinterpret_cast跟C的强制类型转换(T*)(expression)很像。看这个名字中的**interpret**，什么意思？“解释”。也就是说，这个转换就是把当前某个对象S当做另一个对象D来解释，根本不管 S 和 D 是什么关系。
+那么可以看出reinterpret_cast有两个特点：
+1. 对参与转换的两个对象类型没有要求。注意是对类型没有要求，reinterpret_cast 也不能去掉被转换对象的const属性。
+2. 因为第1点，reinterpret_cast很危险。除非很明确自己的目的，否则不应该用它。 
+ 
+```cpp
+class A {
+public:
+    int x = 0x41;
+    int y = 0x42;
+};
+
+int main()
+{
+    int i = 10;
+    A* pa = reinterpret_cast<A*>(&i);    //OK, pa->x : 10, pa->y : -858993460(显然，这是一个随机的，没被初始化的值)
+    
+    std::string* ps1 = reinterpret_cast<std::string*>(&a);  //OK
+    
+    std::string* ps2 = (std::string*)(&a);                  //OK
+    
+    std::string str = *ps;                                  //Crash
+    
+    
+    return 0;
+}
+
+```
+正如上面的示例代码，reinterpret_cast可以把A类型的对象a，转换为一个完全不相关的字符串string类型对象。这个转换不会有问题，因为reinterpret_cast不会做什么检查，也不会对被转换对象做任何改动。可以认为它只是一个说明，说明我们要把那个对象（那块内存）当做新类型的对象来处理。然而，正因为reinterpret_cast不做任何改动，仅仅只是一个“重新解释那块内存”的说明，随后对新对象的访问就会造成崩溃：因为那个对象根本不是std::string。
+
 
 ## const_cast
 const_cast 的使用场景比较简单，通常用于去掉对象的const属性。

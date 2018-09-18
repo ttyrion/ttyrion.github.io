@@ -34,13 +34,18 @@ int main()
     A a;
     D d;
     A* pa1 = &d;                   //OK, implicit conversion
+    
     A* pa2 = static_cast<A*>(&d);  //OK, explicit conversion, upcast
+    
     //D* pd1 = &a;                 //Error! 不能隐式转换
+    
     D* pd2 = static_cast<D*>(&a);  //Ok, downcast, pd2->x:65, pd2->y:66, pd2->z:-858993460 (没经过初始化的随机值)
     
     C* pc1 = (C*)(&a);             //OK, Force conversion
+    
     //C* pc = static_cast<C*>(&a); //Error! static_cast不能在 unrelated 类之间进行转换
 
+    
     return 0;
 }
 
@@ -68,8 +73,11 @@ int main()
     A* pa = reinterpret_cast<A*>(&i);    //OK, pa->x : 10, pa->y : -858993460(显然，这是一个随机的，没被初始化的值)
     
     std::string* ps1 = reinterpret_cast<std::string*>(&a);  //OK
+    
     std::string* ps2 = (std::string*)(&a);                  //OK
+    
     std::string str = *ps;                                  //Crash
+    
     
     return 0;
 }
@@ -110,7 +118,9 @@ int main()
     D d;
     A* pa = dynamic_cast<A*>(&d);
     //D* pd = dynamic_cast<D*>(&a);  //Error, 不是多态类型
+    
     C* pc = dynamic_cast<C*>(&d);    //OK, 多态类型
+    
 
     return 0;
 }

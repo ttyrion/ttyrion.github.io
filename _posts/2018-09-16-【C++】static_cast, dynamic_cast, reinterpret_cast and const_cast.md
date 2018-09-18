@@ -59,7 +59,8 @@ C++的 reinterpret_cast 是低层次的转换（在二进制位层面上），�
 reinterpret_cast跟C的强制类型转换(T*)(expression)很像。看这个名字中的**interpret**，什么意思？“解释”。也就是说，这个转换就是把当前某个对象S当做另一个对象D来解释，根本不管 S 和 D 是什么关系。
 那么可以看出reinterpret_cast有两个特点：
 1. 对参与转换的两个对象类型没有要求。注意是对类型没有要求，reinterpret_cast 也不能去掉被转换对象的const属性。
-2. 因为第1点，reinterpret_cast很危险。除非很明确自己的目的，否则不应该用它。  
+2. 因为第1点，reinterpret_cast很危险。除非很明确自己的目的，否则不应该用它。 
+ 
 ```cpp
 class A {
 public:
@@ -91,6 +92,7 @@ dynamic_cast有运行时类型检查，用于提供安全的downcast转换：判
 另外，**dynamic_cast并不支持所有的downcast转换，只有当这个继承层次的类支持多态时才可以。** 
 1. 若dynamic_cast用于在指针之间进行转换，失败时dynamic_cast返回空指针(nullptr)。
 2. 若dynamic_cast用于在引用之间进行转换，失败时会抛出bad_cast异常。
+
 ```cpp
 class A {
 public:

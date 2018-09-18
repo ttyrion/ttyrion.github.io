@@ -13,7 +13,8 @@ tags:
 static_cast 可以在一下几种情况下进行转换：  
 1. 可以进行隐式类型转换的情况。如非const对象转换为const对象（反过来不行），int转换为double。
 2. **void\*** 和 **T\*** 之间相互转换。
-3. 父类对象的指针和子类对象的指针之间相互转换。即，static_cast可以支持 **upcast** 和 **downcast** 。子类对象转换为父类对象这一情况也属于隐式类型转换（Derived对象**is-a**Base对象），但是反过来的情况则不属于隐式转换。
+3. 父类对象的指针和子类对象的指针之间相互转换。即，static_cast可以支持 **upcast** 和 **downcast** 。子类对象转换为父类对象这一情况也属于隐式类型转换（Derived对象 **is-a** Base对象），但是反过来的情况则不属于隐式转换。  
+
 ```cpp
 class A {
 public:

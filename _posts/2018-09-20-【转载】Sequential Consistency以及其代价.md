@@ -48,12 +48,14 @@ p0:                                          p1:
 ```
 
 ## Memory Consistency Models
-我們前面系列提及到，實際上程式在編譯與執行的時候，不一定會真的照你所寫的順序發生。而是可能改變順序、盡量最佳化，同時營造出彷彿一行一行執行下來的幻象，只要實際的結果和照順序執行沒有差別就好。這樣的幻象要成立，在於程式設計師和該系統（硬體、編譯器等產生、執行程式的平台）達成了一致的協定，系統保證程式設計師只要照著規則走，程式執行結果會是正確的。但什樣叫做正確？正確的意思不是保證只會發生一種執行結果，而是定義在所有可能發生的執行結果中，哪些是允許的。我們把這樣的約定稱為Memory Consistency Models，系統要想辦法在保證正確的情況下，盡可能的最佳化，讓程式跑的又快又好。  
+我們前面系列提及到，實際上程式在編譯與執行的時候，不一定會真的照你所寫的順序發生。而是可能改變順序、盡量最佳化，同時營造出彷彿一行一行執行下來的幻象，只要實際的結果和照順序執行沒有差別就好。這樣的幻象要成立，在於程式設計師和該系統（硬體、編譯器等產生、執行程式的平台）達成了一致的協定，系統保證程式設計師只要照著規則走，程式執行結果會是正確的。但什樣叫做正確？正確的意思不是保證只會發生一種執行結果，而是定義在所有可能發生的執行結果中，哪些是允許的。我們把這樣的約定稱為Memory Consistency Models，系統要想辦法在保證正確的情況下，盡可能的最佳化，讓程式跑的又快又好。
+
 Memory Consistency Models存在於許多不同的層次中，像是組合語言跑在硬體上時，因為處理器可以做指令重排和最佳化，雙方得確保執行結果和預期相同。或者，在將高階語言轉換成組語時，因為編譯器能夠將組合語言重排，雙方也得確保產生的結果和預期一致。換言之，從原始碼到最後實際執行的硬體上，大家都必須做好約定，才會跑出預期的結果。
 
 ## 最直覺的約定，Sequential Consistency
-在1970年代，Lamport大大就在思考這個問題了。他提出一個如今最常見的Memory Consistency Model: Sequential Consistency，並且定義如下：
-< A multiprocessor system is sequentially consistent if the result of any execution is the same as if the operations of all the processors were executed in some sequential order, and the operations of each individual processor appear in this sequence in the order specified by its program.
+在1970年代，Lamport大大就在思考這個問題了。他提出一個如今最常見的Memory Consistency Model: Sequential Consistency，並且定義如下：  
+<
+A multiprocessor system is sequentially consistent if the result of any execution is the same as if the operations of all the processors were executed in some sequential order, and the operations of each individual processor appear in this sequence in the order specified by its program.
 
 我們可以分成兩個觀點來看Sequential Consistency的定義:  
 1. 對於每個獨立的處理單元，執行時都維持程式的順序(Program Order)

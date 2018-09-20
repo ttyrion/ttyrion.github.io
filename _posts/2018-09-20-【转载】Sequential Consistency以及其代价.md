@@ -54,7 +54,7 @@ Memory Consistency Models存在於許多不同的層次中，像是組合語言�
 
 ## 最直覺的約定，Sequential Consistency
 在1970年代，Lamport大大就在思考這個問題了。他提出一個如今最常見的Memory Consistency Model: Sequential Consistency，並且定義如下：  
-<
+< 
 A multiprocessor system is sequentially consistent if the result of any execution is the same as if the operations of all the processors were executed in some sequential order, and the operations of each individual processor appear in this sequence in the order specified by its program.
 
 我們可以分成兩個觀點來看Sequential Consistency的定義:  
@@ -65,7 +65,7 @@ Lamport的定義濃縮的很精煉，對於第一次看到的人會抓不太他�
 
 讓我再額外補充一點，Memory Consistency Model只是一個幻象的約定，程式執行的結果必須看起來是這樣，但是實際程式編譯完、跑在硬體上，想怎麼改變執行順序都可以，只要結果和約好的定義相同就好。
 
-[sc1](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/sc/sc1.png)   
+![sc1](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/sc/sc1.png)   
 
 ## 確保執行順序
 我們將用這張圖來闡述Sequential Consistency的兩個要點。上圖左邊是Dekker's Alogrithm，一個關於critical section的演算法。如果我們確保Sequential Consistency，在每個處理器核心內維持program order，那麼這個程式就能確保同一時間只有一個處理器進入critical section。因為你一定是先立Flag，再檢查對方Flag是否立起，如果沒有才進入Critical Section。  
@@ -78,7 +78,7 @@ Lamport的定義濃縮的很精煉，對於第一次看到的人會抓不太他�
 
 ## Write Bufers with Bypassing Capability
 這個範例會告訴我們維持Write->Read順序的重要性。  
-[sc2](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/sc/sc2.png)   
+![sc2](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/sc/sc2.png)   
 如上圖左，每個處理器都有自己的write buffer，程式在執行時處理器可以先寫到Write Buffer，晚點再寫到Memory上。
 
 我們使用最佳化的手法，當處理器寫入write buffer時，不等待寫入到記憶體完成，直接繼續執行下面的程式。而接下來若發生read，只要讀的位址不是write buffer內等待寫入memory的位址，就允許讀取。這在單核心處理器上是個很常見的最佳化手法，不用等待耗時的寫入就繼續執行，可以縮短等待的時間。
@@ -88,7 +88,7 @@ Lamport的定義濃縮的很精煉，對於第一次看到的人會抓不太他�
 ## Overlapping Write Operations
 這個範例會告訴我們維持Write->Write順序的重要性。
 
-[sc3](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/sc/sc3.png)   
+![sc3](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/sc/sc3.png)   
 假設在一個有多個記憶體模組，沒有bus且彼此互向連結的系統上，因為沒有bus，所以執行時不需要照順序執行，而是可以同時執行多個操作。我們假設處理器一樣照著程式的順序發出write請求，而且不等待前一個執行完畢，就直接發出下一個請求。
 
 在執行右邊的程式時，如果遵守SC，應該可以看到Data會是最新的值2000。但這個架構上並不保證發生，因為P1寫入Data和Head時，可能會發生Head先抵達記憶體，Data後抵達記憶體的情況。因此實際的操作可能變成t1(寫入Head成功)-->t2(讀取Head為1)-->t3(讀取Data讀到舊的值)-->t4(寫入Data成功)，變得完全違反SC了。
@@ -97,7 +97,7 @@ Lamport的定義濃縮的很精煉，對於第一次看到的人會抓不太他�
 
 ## Non-Blocking Read Operations
 這個範例會告訴我們維持Read->Read, Read->Write順序的重要性。  
-[sc4](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/sc/sc4.png)   
+![sc4](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/sc/sc4.png)   
 這也是一個常見的最佳化，允許我們更改讀取的順序。假設P1很乖，程式都照順序寫入，但P2不等待read Head完成就繼續發出read Data的請求。就有可能發生t1(Read Data先回傳結果為0)-->t2(寫入Data 2000)-->t3(寫入Head 1)-->t4(讀取Head為1)，產生違反SC的結果。
 
 ## Cache Architechture 與 Sequential Consistency
@@ -118,10 +118,10 @@ Lamport的定義濃縮的很精煉，對於第一次看到的人會抓不太他�
 ## Maintaining the Illusion of Atomicity for Writes
 在把新的值更新到每個cache上時，要知道這樣的操作並不是atomic的，並不是一瞬間，所有的cache統統都更新完成。可能有的cache會先被更新，有的之後才更新。
 
-[sc5](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/sc/sc5.png)  
+![sc5](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/sc/sc5.png)  
 如上圖，假設P1和P2都照著Program Order執行，但要是寫入A=1和A=2用不同的順序抵達P3和P4，就會發生register1和register2讀到兩個不同的值的情形。例如P3看到的是A=1 A=2 B=1 C=1, P4看到的是A=2 A=1 B=1 C=1，使得P3, P4明明是讀取相同的A值，卻出現不一致的情形。避免這種狀況的方式是確保"寫入相同的位址的順序對於所有處理器而言都是一致的"。
 
-[sc6](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/sc/sc6.png)  
+![sc6](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/sc/sc6.png)  
 但只保證寫入相同位址時所有處理器都看到同樣的更新順序是不夠的。回到一開始的圖右邊的程式碼範例，P1寫入A=1，假設P2已經可見A=1，於是執行B=1，但是對P3來說，還沒收到A=1的修改，但是已經看到B=1的修改。於是便讀出A的值為0。
 想要避免這種情況發生，在讀取一個剛寫入的值之前，必須要確保所有的處理器的cache都正確的更新，如此一來對所有處理器來說，整個程式的順序就一致了，就能夠滿足Sequential Consistency。
 

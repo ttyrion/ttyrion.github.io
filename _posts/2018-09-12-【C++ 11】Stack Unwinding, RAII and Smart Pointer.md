@@ -192,7 +192,7 @@ TestFun(pt);
 ```
 上面的代码执行完第3行后，Test对象就被释放了。在TestFun函数内部，判断weak_ptr引用的对象已经无效，因而不会访问对象的 m_ 成员。
 
-另外，std::weak_ptr的好处是还能解决上面std::shared_ptr造成的 **“循环引用”** 中的 “内存泄漏” 的坑。只要把A类和B类的智能指针成员换成std::weak_ptr，就不会有内存泄漏。
+另外，std::weak_ptr的好处是还能解决上面std::shared_ptr造成的 **“循环引用”** 中的 **“内存泄漏”** 的坑。只要把A类和B类的智能指针成员换成std::weak_ptr，就不会有内存泄漏。
 
 ### std::unique_ptr
 unique_ptr 可以说跟auto_ptr很像，它也没有一般的 copy 语义，而是一种 **"move"** 语义。简单来说，就是 unique_ptr 保证了在任何时候，

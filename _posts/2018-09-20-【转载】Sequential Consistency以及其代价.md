@@ -11,6 +11,8 @@ tags:
 
 ## 转载说明
 这篇文章是转载的，作者博客地址[在这里](http://opass.logdown.com/pages/about-me)，原文链接[在这里](http://opass.logdown.com/posts/809449-concurrency-series-5-the-price-of-sequential-consistency) 。
+另外，这里还有一篇讲 Memory order 的博客，写的比较清晰：[原文链接](http://senlinzhan.github.io/2017/12/04/cpp-memory-order/)。
+
 
 ## 备注
 此篇文章讲内存顺序一致性模型，讲的不错。不过文中提到的 **Dekker's Alogrithm** 是错的，并不是真正的 Dekker's Alogrithm。此文里的代码有潜在的 **starvation** 问题。真正的 Dekker's Alogrithm 是能够保证互斥访问的同时，还避免 deadlock 和 starvation 问题的。算法伪代码如下，详情可参考wiki：[Dekker's algorithm](https://en.wikipedia.org/wiki/Dekker%27s_algorithm) 。  

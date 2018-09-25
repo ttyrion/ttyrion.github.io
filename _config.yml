@@ -50,9 +50,9 @@ kramdown:
 # 评论系统
 # Gitalk
 gitalk:
-  enable: true    #是否开启Gitalk评论
-  clientID: 018ef29943f8ef203d82                            #生成的clientID
-  clientSecret: f0b1cae786ef5ff50f163953b12bef35e383b813    #生成的clientSecret
+  enable: false    #是否开启Gitalk评论
+  clientID: 0                            #生成的clientID
+  clientSecret: 0    #生成的clientSecret
   repo: ttyrion.github.io    #仓库名称
   owner: ttyrion    #github用户名
   admin: ttyrion

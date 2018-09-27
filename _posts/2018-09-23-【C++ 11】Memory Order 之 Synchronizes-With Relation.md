@@ -53,6 +53,7 @@ void produce(void* param) {
     std::fill(std::begin(task.task_msg), std::end(task.task_msg), 1);
 
     // atomic write-release
+    
     my_guard.store(1, std::memory_order_release);
 }
 
@@ -72,6 +73,7 @@ void consume(void* param) {
 
 void handle_task(const Task& task) {
     //...
+    
 }
 
 ```

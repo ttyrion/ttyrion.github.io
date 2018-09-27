@@ -38,7 +38,7 @@ struct Task {
     int  task_id;
 };
 
-std::atomic\<int\> my_guard(0); 
+std::atomic<int> my_guard(0); 
 Task my_shared_task;
 
 ```

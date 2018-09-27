@@ -1,6 +1,6 @@
 ---
 layout:     page
-title:      【C++ 11】Memory Models and Memory Reordering.md
+title:      【C++ 11】Memory Models and Memory Reordering
 subtitle:   C++ 11 引入了多线程、并发等等概念，伴随着的是新的内存模型。
 date:       2018-09-23
 author:     翼

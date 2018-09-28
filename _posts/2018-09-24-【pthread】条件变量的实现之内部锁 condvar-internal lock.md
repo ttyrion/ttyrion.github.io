@@ -11,7 +11,7 @@ tags:
 
 在第一篇《条件变量的实现之原理描述》中介绍过，条件变量的结构体中有一个字段 __g1_orig_size，它会被作为一个futex字来实现一个条件变量内部锁（ **condvar-internal lock**），__g1_orig_size的低2位存储这个内部锁的状态值。__g1_orig_size 的高位bits还有其他作用，因此这个锁会稍微复杂一点。线程调用 pthread_cond_signal() 发送信号时，就要获取和释放这个锁，获取锁和释放锁的函数分别是：__condvar_acquire_lock() 和 __condvar_release_lock()。
 
-这个内部锁有三种状态，是一个“three-state lock”。状态值和对应状态如下(lsb2表示__g1_orig_size/futex字的低2位值)：
+这个内部锁有三种状态，是一个“**three-state lock**”。状态值和对应状态如下(lsb2表示__g1_orig_size/futex字的低2位值)：
 1. lsb2 == 0 => not acquired.
 2. lsb2 == 1 => acquired.
 3. lsb2 == 2 => acquired-with-futex_wake-request.

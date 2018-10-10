@@ -1,6 +1,6 @@
 ---
 layout:         page
-title:            【pthread】条件变量的实现之等待和发送信号
+title:            【pthread】条件变量的实现之详细分析等待和发送信号
 subtitle:     分析Glibc(2.27)中条件变量相关的代码
 date:             2018-09-24
 author:         翼
@@ -9,7 +9,9 @@ catalog: true
 tags:
 ---
 
-在第一篇《条件变量的实现之原理描述》中介绍过，Glibc实现条件变量时，把等待线程（稍后都称为waiters）分为两组：G1和G2。一个线程（waiter）调用pthread_cond_wait()成功阻塞时，就会被放入G2组中：
+### pthread_cond_wait 把等待线程放入 G2
+
+在第一篇《条件变量的实现之原理描述》中介绍过，Glibc实现条件变量时，把等待线程（稍后都称为waiters）分为两组：G1和G2。一个线程（waiter）调用 pthread_cond_wait()成功阻塞时，就会被放入G2组中。pthread_cond_timedwait 和 pthread_cond_wait 内部都是调用 __pthread_cond_wait_common 来实现：
 
 ```cpp
 
@@ -37,9 +39,63 @@ if (abstime == NULL)
 
 ```
 
-何为“把等待线程放入G1或者G2”?，实际上就是让等待线程阻塞在__g_signals[g1]或者__g_signals[g2]这个futex字上。
+看上面代码，可以发现 pthread_cond_wait “打算”把调用线程都加入了G2这一组等待队列中。为什么说“打算”呢？因为实际上，在 pthread_cond_wait 把调用线程阻塞在__g_signals[g]前，可能发生了 G1 和 G2 的角色切换，导致原来表示G2的组槽（group slot）g 现在表示的是新的组 G1。
 
-看上面代码，可以发现 pthread_cond_wait “打算”把调用线程都加入了G2这一组等待队列中。为什么说“打算”呢？因为实际上，在 pthread_cond_wait 把调用线程阻塞在__g_signals[g]前，可能发生了 G1 和 G2 的角色切换。
+**何为“把等待线程放入G1或者G2”?，实际上就是让等待线程阻塞在__g_signals[g1]或者__g_signals[g2]这个futex字上。**
+
+### pthread_cond_signal 只会唤醒 G1 组的等待线程
+```cpp
+int
+__pthread_cond_signal (pthread_cond_t *cond)
+{
+  LIBC_PROBE (cond_signal, 1, cond);
+
+  // First check whether there are waiters.
+  
+  unsigned int wrefs = atomic_load_relaxed (&cond->__data.__wrefs);
+  if (wrefs >> 3 == 0)
+    return 0;
+  int private = __condvar_get_private (wrefs);
+
+  __condvar_acquire_lock (cond, private);
+
+  unsigned long long int wseq = __condvar_load_wseq_relaxed (cond);
+  unsigned int g1 = (wseq & 1) ^ 1;
+  wseq >>= 1;
+  bool do_futex_wake = false;
+
+  // If G1 is still receiving signals, we put the signal there.
+  
+  // If not, we check if G2 has waiters, and if so, quiesce and switch G1 to the former G2; 
+  
+  // if this results in a new G1 with waiters (G2 might have cancellations already,
+  
+  // see __condvar_quiesce_and_switch_g1), we put the signal in the new G1. 
+  
+  if ((cond->__data.__g_size[g1] != 0)
+      || __condvar_quiesce_and_switch_g1 (cond, wseq, &g1, private))
+    {
+      atomic_fetch_add_relaxed (cond->__data.__g_signals + g1, 2);
+      cond->__data.__g_size[g1]--;
+      do_futex_wake = true;
+    }
+
+  __condvar_release_lock (cond, private);
+
+  //wake up 1 thread
+  
+  if (do_futex_wake)
+    futex_wake(cond->__data.__g_signals + g1, 1, private);
+
+  return 0;
+}
+
+```
+看上面的代码，可以得出以下几个结论：
+1. **如果当期没有线程在等待条件变量（由引用计数__wrefs确定），pthread_cond_signal 直接返回，不会在任何组中放一个条件信号。**
+2. **如果G1组中有等待线程，** pthread_cond_signal 在G1中放入一个条件信号，让G1组的等待线程计数减1，并且唤醒一个线程。**signaler 线程只会放入条件信号，被唤醒的waiter线程会去消费这个条件信号。**
+3. **如果G1组已经空了，**  pthread_cond_signal 会先把当前的G2组切换为G1组，然后执行上面第2个操作。因为G2组中接收了新的等待线程，这可以从上面 pthread_cond_wait 的实现中看到。另外，如果G2也是空的，就不会切换G1和G2，因为新的空的G1，会导致下一次组切换。
+
 
 ### pthread_cond_signal 可能唤醒一个以上的等待线程
 ```cpp
@@ -81,6 +137,8 @@ do
 ```cpp
 // __pthread_cond_signal(...)
 
+...
+
 if ((cond->__data.__g_size[g1] != 0)
   || __condvar_quiesce_and_switch_g1 (cond, wseq, &g1, private))
 {
@@ -96,6 +154,8 @@ __condvar_release_lock (cond, private);
 if (do_futex_wake)
     futex_wake(cond->__data.__g_signals + g1, 1, private);
 
+...
+
 ```
 看上面的代码，一个线程A（**waiter**）调用pthread_cond_wait()，假设此时g1=1，g2=0。还未准备阻塞前，线程A会先自旋一段时间，检测当前组G2中是否有可用信号。而另一个线程B（**signaler**）在此期间调用了pthread_cond_signal()，线程B判断到当前__g_size[g1]==0（即__g_size[1]==0），就会执行__condvar_quiesce_and_switch_g1()，之后g1=0，g2=1。接着线程B会给__g_signals[g1]中添加一个条件信号，并且把do_futex_wake设置为true。线程A本来在自旋中检测G2是否有信号可用的，由于线程B切换了G1和G2，使得线程A检测到了来自新的G1的可用信号并且跳出循环，不再阻塞。而线程B设置了do_futex_wake=true后，又调用了一次futex_wake()，这很可能又唤醒一个线程。
 
@@ -107,6 +167,8 @@ __g1_start 的设置比较晦涩，却很重要。因为正是它使得“伪唤
 
 ```cpp
 // __condvar_quiesce_and_switch_g1(...)
+
+...
 
 // Relaxed MO is fine because the change comes with no additional constraints
 
@@ -124,7 +186,8 @@ __condvar_set_orig_size (cond, orig_size);
 // Use and addition to not loose track of cancellations in what was previously G2.
 
 cond->__data.__g_size[g1] += orig_size;
-  
+
+...
 
 ```
 首先，我们可以知道，__g1_start 的值是不断增加的，其次，它的值和之前的 __g1_orig_size 值有关。
@@ -152,14 +215,240 @@ __g_size[g1] = M;
 ```
 也就是说：等待序列 **__wseq** 是递增的（这也就是为什么还要增加一个字段 **__wrefs** 来作为引用计数），G1组的起始位置也是递增的。
 
+### 为什么 __g1_start 中也要记录G2的索引？
+```cpp
+// __pthread_cond_wait_common()
+
+...
+
+// A waiter is unblocked at this point.
 
 
+// Try to grab a signal.
+
+while (!atomic_compare_exchange_weak_acquire (cond->__data.__g_signals + g,
+       &signals, signals - 2));
+
+// We consumed a signal but we could have consumed from a more recent group
+
+// that aliased with ours due to being in the same group slot.
+ 
+uint64_t g1_start = __condvar_load_g1_start_relaxed (cond);
+if (seq < (g1_start >> 1))
+{
+    // We potentially stole a signal from a more recent group 
+
+    // but we do not know which group we really consumed from.
+
+    if (((g1_start & 1) ^ 1) == g)
+    {
+        // We have to conservatively undo our potential mistake of stealing a signal. 
+        
+        unsigned int s = atomic_load_relaxed (cond->__data.__g_signals + g);
+        while (__condvar_load_g1_start_relaxed (cond) == g1_start)
+        {
+            // Try to add a signal.    We don't need to acquire the lock
+            
+            // because at worst we can cause a spurious wake-up.    
+            
+            if (((s & 1) != 0) || atomic_compare_exchange_weak_relaxed(cond->__data.__g_signals + g, &s, s + 2))
+            {
+                // If we added a signal, we also need to add a wake-up on the futex.    
+
+                futex_wake (cond->__data.__g_signals + g, 1, private);
+                break;
+            }
+            /* TODO Back off.    */
+        }
+    }
+}
+
+```
+上面截取的代码是一个等待线程被唤醒后要走的逻辑，先看看上面两个if判断的意义。根据上面讲述的“__g1_start 的设置”，我们假设一个场景，看看会发生什么。
+
+初始时，G1和G2组都是空的。此时g2==0，g1==1。这个时候有3个线程调用pthread_cond_wait进入等待序列，那么G2组就有3个等待线程。这个时候有一个signaler线程发送了三个条件信号。当第一个条件信号产生的时候，pthread_cond_signal就会发现G1组是空的（__g_size[g1] == 0，此时g1的值还是1），这个时候就会切换G1和G2（因为这里获取了条件变量的内部锁，这个操作是原子的）以及在G1组中放入条件信号。此时，G1组就有了3个等待线程，G2组是空的。**并且，g1==0; g2==1; (__g1_start >> 1) == 0;__g_signals[g1]==1;__g_signals[g2]==0。** 这三个条件信号会唤醒新的G1中的3个等待线程，我们现在假设其他两个等待线程消费信号时一切正常（也就是__g_signals[g1]的值还是1，另两个信号已经被消费掉），只考虑其中在等待序列中位置为2的那个线程（seq == 2），暂且称之为2号线程，该线程被唤醒后会从它 **以为的G2组**（索引是g==0）中消费一个条件信号。因为线程调度顺序是未知的，有可能这个线程在被唤醒后还未执行时又有4个线程调用了pthread_cond_wait进入等待组G2（g2==1），并且一个signaler线程发送了一个条件信号，这个条件信号又会导致第二次的组角色切换以及在新的G1组中放入条件信号。切换完成后，G1组中有4个等待线程，G2组是空的，**并且，g1==1; g2==0;(__g1_start >> 1) == 3;__g_signals[g1]==1;__g_signals[g2]==0。** 这个时候第一个if判断“if (seq < (g1_start >> 1))”就成立了，说明在2号线程恢复执行时又发生了一次组角色切换。但此时仍不能说明2号线程偷了一个条件信号。因为第二次组角色切换完成后，signaler线程把信号放入新的G1组中（g1==1），而2号线程消费的是g=0那组（就是新的G2组）中的条件信号，这是正常的，这个信号本来就是给该线程准备的，之后__g_signals[g2]变为0，使得后面调用pthread_cond_wait的线程可以阻塞在__g_signals[g2]这个futex字上。**所以，判断一个被恢复的等待线程是否偷了一个信号，还要靠第二个if判断。**
+
+继续假设，在上面的场景中，第二次组角色切换后，2号线程依然没有被调度执行，并且此时发生了第三次组角色切换。之后，**g1==0; g2==1;(__g1_start >> 1) == 7。** 这种情况下，这两个if判断都会成立。问题的关键在于，2号线程从g==0那组消费一个信号，而g1==0，也就是说，它从最新的那个G1组中消费了一个条件信号。这是有问题的。
+
+再继续假设，上面的第三次组角色切换后，2号线程依然没有被调度执行，并且此时发生了第四次组角色切换。之后，**g1==1; g2==0;(__g1_start >> 1) == N; __g_signals[g2]==0。** 这种情况下，__pthread_cond_wait_common 执行到while(1)循环开始处的while (signals == 0 && spin > 0)，并判断到当前线程（占有等待序列的位置是seq）所属的组已经关闭时，会直接 **goto done;**，不会消费条件信号。
+
+上面已经看出了为什么 __g1_start 中也要记录G2的索引：就是为了判断一个被唤醒的等待线程是不是偷了条件信号。
+
+### 伪唤醒
+接着上面讲，一个被唤醒的等待线程判断出自己偷了一个信号后是怎么处理的？
+
+这个线程根本不知道自己从哪个组中偷了一个条件信号！它所知道的只是它从 group slot == g 的组中偷了一个信号，而当前，g是G2还是最新的G1的索引（组槽），该线程是无法知道的。
+
+我们也不用关心比当前最新的这个G1更旧的组，因为它们已经被关闭了。这也是 __g1_start 的作用之一，等待线程可以通过判断 **seq < (__condvar_load_g1_start_relaxed (cond) >> 1** 是否成立，来得知对应的组是否已经被关闭。这个作用类似于__g_signals[g]中的LSB（**the group closed flag**）的作用。一个线程调用pthread_cond_wait时，也会首先判断对应组是否已经被关闭，是则不会阻塞。
+
+回过来接着看一个被唤醒的等待线程判断出自己偷了一个信号后做了什么：
+```cpp
+// __pthread_cond_wait_common()
 
 
+unsigned int s = atomic_load_relaxed (cond->__data.__g_signals + g);
+while (__condvar_load_g1_start_relaxed (cond) == g1_start)
+{
+    if (((s & 1) != 0) || atomic_compare_exchange_weak_relaxed(cond->__data.__g_signals + g, &s, s + 2))
+    {
+        futex_wake (cond->__data.__g_signals + g, 1, private);
+        break;
+    }
+}
+```
+该偷了信号的线程判断了条件 __condvar_load_g1_start_relaxed (cond) == g1_start 是否成立，如果不成立，表示又进行了一次组角色切换，之前被认为从最新的G1组中偷了信号，而此时G1组已经切换了。同时，因为切换组角色时，**__condvar_quiesce_and_switch_g1** 一定会首先等G1中所有的等待线程都被唤醒（等 **__g_refs[g1]** 变为0）。换言之，如果此时判断到__condvar_load_g1_start_relaxed (cond) == g1_start 不成立，也没必要再做任何事情，因为G1中的阻塞线程已经都被唤醒了（有更多的可消费的条件信号唤醒了它们）。而如果该条件成立，表示这个线程从最新G1中偷了一个信号，它做了两件事情：
+1. 如果G1组的关闭标志被设置了，表示有另一个signaler线程准备进行组角色切换， 它会等待G1中所有的等待线程退出等待。此时也不必增加条件信号，只是唤醒一个线程。
+2. 如果G1组的关闭标志未被设置，增先给该组增加一个条件信号，再唤醒一个等待线程。
+
+由此可见，一个等待线程被唤醒，可能并不是因为它所等待的条件成立而被一个signaler线程唤醒，它还可能会被一个偷了信号的线程唤醒。这就是“**伪唤醒**”，这也就是为什么POSIX标准也要求从阻塞状态恢复的等待线程要继续判断一下它所等待的条件是否已经成立，而不能依赖条件变量。
+
+这里没必要对从G2中偷信号的情况进行处理，原因是signaler线程决不会向G2中放入条件信号，因此G2中的信号可能是一个偷了信号的线程添加进去的（虽然这是非必要的）。向G2添加了信号是可能的，因为多线程的调度可能使得上面本打算向G1组添加信号的时候，发生了组角色切换，从而导致信号被添加到G2中。
+
+**这里可以总结一下，就是signaler线程不会唤醒任何G2组中的等待线程，它只会向G1组中放入条件信号并唤醒G1组中的等待线程。G2组中的等待线程只有在G2被切换为G1以后，才会被signaler线程唤醒。**
+
+之所以这个过程如此复杂，主要是因为在多线程环境中还要处理G1和G2的切换，后面的部分会分析组切换。
+
+### G1/G2 切换
+```cpp
+static bool __attribute__ ((unused))
+__condvar_quiesce_and_switch_g1 (pthread_cond_t *cond, uint64_t wseq,
+        unsigned int *g1index, int private)
+{
+    const unsigned int maxspin = 0;
+    unsigned int g1 = *g1index;
+
+    // __g_size may hold a negative value,
+    
+    // so put the expression this way avoids relying on implementation-defined behavior.
+    
+    // This works correctly for a zero-initialized condvar too.
+    
+    unsigned int old_orig_size = __condvar_get_orig_size (cond);
+    uint64_t old_g1_start = __condvar_load_g1_start_relaxed (cond) >> 1;
+    if (((unsigned) (wseq - old_g1_start - old_orig_size) + cond->__data.__g_size[g1 ^ 1]) == 0)
+    {
+        // A new empty G1(from G2) would cause a next switch again on the next signal
+        
+        // So retufn false if G2 is empty, do not switch.
+        
+        return false;
+    }
+    
+    // Now try to close and quiesce G1
+
+    // Set LSB = true( set the group closed flag): this group would be closed. 
+    
+    // This tells waiters which are about to wait that they shouldn't do that anymore.
+    
+    atomic_fetch_or_relaxed (cond->__data.__g_signals + g1, 1);
+
+    // Wait until there are no group references anymore.
+
+    unsigned r = atomic_fetch_or_release (cond->__data.__g_refs + g1, 0);
+
+    //spin and wait until there are no group references anymore.
+    
+    while ((r >> 1) > 0)
+    {
+        for (unsigned int spin = maxspin; ((r >> 1) > 0) && (spin > 0); spin--)
+        {
+            r = atomic_load_relaxed (cond->__data.__g_refs + g1);
+        }
+        
+        if ((r >> 1) > 0)
+        {
+            // Set the wake-request flag and block if there's still waiters after spinning.
+            
+            r = atomic_fetch_or_relaxed (cond->__data.__g_refs + g1, 1);
+
+            if ((r >> 1) > 0) {
+                futex_wait_simple (cond->__data.__g_refs + g1, r, private);
+            }
+                
+            // Reload here so we eventually see the most recent value even if we do not spin.
+                
+            r = atomic_load_relaxed (cond->__data.__g_refs + g1);
+        }
+    }
+
+    atomic_thread_fence_acquire ();
+
+    // Update __g1_start, finish closing this group.
+    
+    // LSB is set with the index of the new G2.
+    
+    __condvar_add_g1_start_relaxed (cond, (old_orig_size << 1) + (g1 == 1 ? 1 : - 1));
 
 
+    // Now reopen the group
+    
+    atomic_store_release (cond->__data.__g_signals + g1, 0);
 
+    // At this point, the old G1 is now a valid new G2 (but not in use yet).
 
+    // switch the index of G1 and G2
+    
+    wseq = __condvar_fetch_xor_wseq_release (cond, 1) >> 1;
+    g1 ^= 1;
+    *g1index ^= 1;
+
+    // __g1_orig_size is set nowhere else
+
+    // These values are just observed by signalers, and thus protected by the lock.
+    
+    unsigned int orig_size = wseq - (old_g1_start + old_orig_size);
+    __condvar_set_orig_size (cond, orig_size);
+    
+    // Use an addition to not loose track of cancellations in what was previously G2.
+    
+    cond->__data.__g_size[g1] += orig_size;
+
+    // The new G1's size may be zero because of cancellations during its time as G2.
+    
+    // If this happens, there are no waiters that have to receive a signal, so we do not need to add any and return false.
+    
+    if (cond->__data.__g_size[g1] == 0)
+        return false;
+
+    return true;
+}
+
+```
+上面是负责切换G1/G2的函数的完整代码，可以看出它主要做如下几件事情：
+1. 如果当前G2组是空的，就不进行切换，否则切换后空的G1组又会导致下一次G1/G2切换。
+2. 设置__g_signals[g1]的LSB为1，也就是组关闭标志，防止还有新的等待线程进入该组。
+3. 等待G1组的所有等待线程退出等待，也就是等待__g_refs[g1]变为0。这里可能会阻塞，如果会阻塞，就先设置__g_refs[g1]的LSB为1。
+4. 设置 __g1_start。
+5. 设置 __g_signals[g1]=0，也就是切换完成后，__g_signals[g2]==0。
+6. 切换G1和G2的slot，完成组切换。
+7. 设置 __g_size[g1]，这是切换后的新的G1组大小。
+
+### signaler 阻塞后怎么唤醒?
+上面讲到线程调用pthread_cond_signal时，如果需要切换G1/G2，就可能会阻塞。那么阻塞后如何恢复呢？
+
+不论是普通的wait还是带超时的wait，被阻塞的线程恢复后，都会调用 __condvar_dec_grefs：
+```cpp
+static void
+__condvar_dec_grefs (pthread_cond_t *cond, unsigned int g, int private)
+{
+  if (atomic_fetch_add_release (cond->__data.__g_refs + g, -2) == 3)
+    {
+        atomic_fetch_and_relaxed (cond->__data.__g_refs + g, ~(unsigned int) 1);
+        futex_wake (cond->__data.__g_refs + g, INT_MAX, private);
+    }
+}
+
+```
+上面的if判断当前__g_refs[g]==3，也就是__g_refs[g]中引用计数值是1，并且LSB也是1，从上面G1/G2切换原理分析中可知，这个LSB正是signaler线程设置的标志位，表示它已经阻塞了，在等待这个组的线程都退出。
+
+那么当前调用 __condvar_dec_grefs 的线程减少了引用计数后，引用计数就变为0了，即改组线程都退出等待了，此时，该线程（最后一个减少引用计数的线程）就会调用futex_wake，来唤醒阻塞在 __g_refs[g]这个futex字上的 signaler 线程。
+
+### 为什么要用两个组 G1 和 G2 ？
+从代码分析来看，用G1和G2两个组来实现条件变量的等待线程序列，能保证线程按照一定的顺序被唤醒。
+
+举例来说，比如有3个线程调用 pthread_cond_wait 阻塞后，另一个线程调用 pthread_cond_signal 发送条件信号。此时那3个等待线程就被放入了G1组中，而后来的等待线程只能先位于G2中。并且后来的等待线程只能等到前面3个线程全部被唤醒后，它们才会被切换到新的G1组中，从而可能被唤醒。
+
+**也就是说，两个组能保证一定的唤醒顺序。但是依然不能按照所有线程阻塞的顺序依次唤醒。**
 
 
 

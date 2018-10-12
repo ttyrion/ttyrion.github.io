@@ -13,13 +13,16 @@ tags:
 
 通过使用EcMenu工具来配置系统上下文菜单，结合Cmder，这个体验就跟Linux系统的命令行差不多。后面附有相关的下载链接。
 
-配置好的上下文菜单如图：
+**配置好的上下文菜单如图：**
+
 ![ContextMenu](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/cmd/contextmenu.png)
 
-上下文菜单设置：
+**上下文菜单设置：**
+
 ![ContextMenu](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/cmd/setcontextmenu.png)
 
-Cmder界面如图：
+**Cmder界面如图：**
+
 ![ContextMenu](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/cmd/cmder.png)
 
 

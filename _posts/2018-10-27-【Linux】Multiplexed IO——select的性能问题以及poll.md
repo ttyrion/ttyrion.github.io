@@ -202,7 +202,8 @@ int main(int argc, char* arg[]) {
         unlink(client_fifo.c_str());
 
         close(server_fifo);
-        unlink(server_fifo_name.c_str());
+        //unlink(server_fifo_name.c_str());
+        
     };
 
     fd_set read_set;

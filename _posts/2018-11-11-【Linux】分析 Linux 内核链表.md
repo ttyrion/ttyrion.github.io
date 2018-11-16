@@ -45,9 +45,8 @@ struct super_block {
 	struct file_system_type	*s_type;
 	const struct super_operations	*s_op;
 
-	//...
-
-
+	...
+    
 };
 
 ```
@@ -179,13 +178,13 @@ struct super_block *sget(struct file_system_type *type,
 {
     struct super_block *s = NULL;
 
-	/* ... */
+    ...
 
-	list_add_tail(&s->s_list, &super_blocks);
+    list_add_tail(&s->s_list, &super_blocks);
 	
-    /* ... */
+    ...
 
-	return s;
+    return s;
 }
 
 ```

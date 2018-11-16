@@ -23,8 +23,7 @@ struct list_node {
 Linux内核却不是这么定义的。Linux内核定义的双向链表数据结构如下：
 ```cpp
 
-// /include/linux/types.h
-
+/* /include/linux/types.h */
 
 struct list_head {
 	struct list_head *next, *prev;
@@ -35,8 +34,7 @@ struct list_head {
 在内核中用链表组织的数据结构内部通常都有一个 struct list_head 成员。比如，文件系统的超级块结构 **super_block**：
 ```cpp
 
-// /include/linux/fs.h
-
+/* /include/linux/fs.h */
 
 struct super_block {
 	struct list_head	s_list;
@@ -62,8 +60,7 @@ struct super_block {
 这涉及到内核定义的两个宏：
 ```cpp
 
-// /include/linux/list.h
-
+/* /include/linux/list.h */
 
 #define LIST_HEAD_INIT(name) { &(name), &(name) }
 
@@ -74,8 +71,7 @@ struct super_block {
 还是以上面的超级块链表为例，看看这个链表的构建。
 ```cpp
 
-// /fs/super.c
-
+/* /fs/super.c */
 
 static LIST_HEAD(super_blocks);
 
@@ -96,15 +92,11 @@ static struct list_head super_blocks = { &(super_blocks), &(super_blocks) };
 这其实就是定义了一个**空链表super_blocks**：
 ```cpp
 
-// /include/linux/list.h
-
+/* /include/linux/list.h */
 
 /**
-
  * list_empty - tests whether a list is empty
-
  * @head: the list to test.
-
  */
 static inline int list_empty(const struct list_head *head)
 {
@@ -117,8 +109,7 @@ list_empty接口就是通过判断 struct list_head 结构的 next 字段是否�
 除了通过 LIST_HEAD宏来初始化一个链表，内核还定义了一个 inline 函数 **INIT_LIST_HEAD**：
 ```cpp
 
-// /include/linux/list.h
-
+/* /include/linux/list.h */
 
 static inline void INIT_LIST_HEAD(struct list_head *list)
 {
@@ -135,8 +126,7 @@ static inline void INIT_LIST_HEAD(struct list_head *list)
 内核实现了 list_add 和 list_add_tail 两个接口来在链表头和尾插入数据。
 ```cpp
 
-// /include/linux/list.h
-
+/* /include/linux/list.h */
 
 static inline void __list_add(struct list_head *new,
 			      struct list_head *prev,
@@ -149,18 +139,12 @@ static inline void __list_add(struct list_head *new,
 }
 
 /**
-
  * list_add - add a new entry
-
  * @new: new entry to be added
-
  * @head: list head to add it after
-
  *
  * Insert a new entry after the specified head.
-
  * This is good for implementing stacks.
-
  */
 static inline void list_add(struct list_head *new, struct list_head *head)
 {
@@ -169,18 +153,12 @@ static inline void list_add(struct list_head *new, struct list_head *head)
 
 
 /**
-
  * list_add_tail - add a new entry
-
  * @new: new entry to be added
-
  * @head: list head to add it before
-
  *
  * Insert a new entry before the specified head.
-
  * This is useful for implementing queues.
-
  */
 static inline void list_add_tail(struct list_head *new, struct list_head *head)
 {
@@ -191,8 +169,7 @@ static inline void list_add_tail(struct list_head *new, struct list_head *head)
 实际上，内核的这个链表是循环链表，表头的next、prev分别指向链表中的第一个和最后一个node。比如，在mount的时候，内核会调用一个函数sget来查找或者创建一个超级块，并添加到super_blocks链表中。sget的定义如下：
 ```cpp
 
-// /fs/super.c
-
+/* /fs/super.c */
 
 struct super_block *sget(struct file_system_type *type,
 			int (*test)(struct super_block *,void *),
@@ -202,11 +179,11 @@ struct super_block *sget(struct file_system_type *type,
 {
     struct super_block *s = NULL;
 
-	...
+	/* ... */
 
 	list_add_tail(&s->s_list, &super_blocks);
 	
-    ...
+    /* ... */
 
 	return s;
 }
@@ -227,19 +204,13 @@ super_blocks双向循环链表的示意图如下：
 内核定义了一系列的宏来访问链表数据，这些宏包括：**list_entry**, **list_first_entry**, **list_last_entry**, **list_first_entry_or_null**, **list_next_entry**, **list_prev_entry**等等。从名字基本可以看出它们的作用，**list_entry**是最基本的，其他几个宏都是在**宏list_entry**的基础上实现的。下面就分析**list_entry**是如何访问链表数据的。
 ```cpp
 
-// /include/linux/list.h
-
+/* /include/linux/list.h */
 
 /**
-
  * list_entry - get the struct for this entry
-
  * @ptr:	the &struct list_head pointer.
-
  * @type:	the type of the struct this is embedded in.
-
  * @member:	the name of the list_head within the struct.
-
  */
 #define list_entry(ptr, type, member) \
 	container_of(ptr, type, member)
@@ -248,19 +219,13 @@ super_blocks双向循环链表的示意图如下：
 **container_of**也是一个宏，其定义在kernel.h头文件中：
 ```cpp
 
-// /include/linux/kernel.h
-
+/* /include/linux/kernel.h */
 
 /**
-
  * container_of - cast a member of a structure out to the containing structure
-
  * @ptr:	the pointer to the member.
-
  * @type:	the type of the container struct this is embedded in.
-
  * @member:	the name of the member within the struct.
-
  */
 #define container_of(ptr, type, member) ({			\
 	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
@@ -270,8 +235,7 @@ super_blocks双向循环链表的示意图如下：
 **offsetof**也是一个宏，其定义在stddef.h中：
 ```cpp
 
-// /include/linux/stddef.h
-
+/* /include/linux/stddef.h */
 
 #undef offsetof
 #ifdef __compiler_offsetof
@@ -302,29 +266,20 @@ psb->s_dev;
 内核中定义了一系列遍历链表的宏，比如向前遍历链表的 list_for_each，向后遍历链表的 list_for_each_prev：
 ```cpp
 
-// /include/linux/list.h
-
+/* /include/linux/list.h */
 
 /**
-
  * list_for_each	-	iterate over a list
-
  * @pos:	the &struct list_head to use as a loop cursor.
-
  * @head:	the head for your list.
-
  */
 #define list_for_each(pos, head) \
 	for (pos = (head)->next; pos != (head); pos = pos->next)
 
 /**
-
  * list_for_each_prev	-	iterate over a list backwards
-
  * @pos:	the &struct list_head to use as a loop cursor.
-
  * @head:	the head for your list.
-
  */
 #define list_for_each_prev(pos, head) \
 	for (pos = (head)->prev; pos != (head); pos = pos->prev)
@@ -347,19 +302,13 @@ list_for_each(iter, &super_blocks) {
 可以看到，这些宏就是一个for循环。以遍历super_blocks为例，我们可以这样：
 ```cpp
 
-// /include/linux/list.h
-
+/* /include/linux/list.h */
 
 /**
-
  * list_for_each_entry	-	iterate over list of given type
-
  * @pos:	the type * to use as a loop cursor.
-
  * @head:	the head for your list.
-
  * @member:	the name of the list_head within the struct.
-
  */
 #define list_for_each_entry(pos, head, member)				\
 	for (pos = list_first_entry(head, typeof(*pos), member);	\
@@ -367,15 +316,10 @@ list_for_each(iter, &super_blocks) {
 	     pos = list_next_entry(pos, member))
 
 /**
-
  * list_for_each_entry_reverse - iterate backwards over list of given type.
-
  * @pos:	the type * to use as a loop cursor.
-
  * @head:	the head for your list.
-
  * @member:	the name of the list_head within the struct.
-
  */
 #define list_for_each_entry_reverse(pos, head, member)			\
 	for (pos = list_last_entry(head, typeof(*pos), member);		\
@@ -399,8 +343,7 @@ list_for_each_entry(iter, &super_blocks, s_list) {
 上面的链表操作接口并没有考虑在并行执行的环境下的问题，因此实际上调用这些接口的地方应该自己保证正确地进行并行访问。实际上，以上面的超级块为例，内核在定义超级块链表super_blocks的同时，也定义了一个自旋锁sb_lock:
 ```cpp
 
-// /fs/super.c
-
+/* /fs/super.c */
 
 static LIST_HEAD(super_blocks);
 static DEFINE_SPINLOCK(sb_lock);
@@ -412,34 +355,24 @@ static DEFINE_SPINLOCK(sb_lock);
 虽然链表操作接口没有锁机制，不过内核还是定义了几个更安全的接口：
 ```cpp
 
-// /include/linux/list.h
+/* /include/linux/list.h */
 
 
 /**
-
  * list_for_each_safe - iterate over a list safe against removal of list entry
-
  * @pos:	the &struct list_head to use as a loop cursor.
-
  * @n:		another &struct list_head to use as temporary storage
-
  * @head:	the head for your list.
-
  */
 #define list_for_each_safe(pos, n, head) \
 	for (pos = (head)->next, n = pos->next; pos != (head); \
 		pos = n, n = pos->next)
 
-/*
-
+/**
  * list_for_each_prev_safe - iterate over a list backwards safe against removal of list entry
-
  * @pos:	the &struct list_head to use as a loop cursor.
-
  * @n:		another &struct list_head to use as temporary storage
-
  * @head:	the head for your list.
-
  */
 #define list_for_each_prev_safe(pos, n, head) \
 	for (pos = (head)->prev, n = pos->prev; \

@@ -11,7 +11,7 @@ tags:
 
 ### Linux 内核双向链表数据结构
 通常我们实现双向链表时，会定义如下的结构：
-```cpp
+```C
 struct list_node {
     struct list_node *prev, *next;
     elemment e;
@@ -21,7 +21,7 @@ struct list_node {
 这是数据结构教材上定义双向链表的经典方式：数据被包含在链表节点结构中。然后每一个数据类型的链表都要定义一个类似的 node 结构。当然，C++可以用模板实现链表，抽象出类型无关的链表操作接口，正如STL中的std::\<list\>。
 
 Linux内核却不是这么定义的。Linux内核定义的双向链表数据结构如下：
-```cpp
+```C
 
 /* /include/linux/types.h */
 
@@ -32,7 +32,7 @@ struct list_head {
 ```
 
 在内核中用链表组织的数据结构内部通常都有一个 struct list_head 成员。比如，文件系统的超级块结构 **super_block**：
-```cpp
+```C
 
 /* /include/linux/fs.h */
 
@@ -58,7 +58,7 @@ struct super_block {
 有了 struct list_head 结构，如何构建链表呢？或者说，如何初始化一个空链表呢？
 
 这涉及到内核定义的两个宏：
-```cpp
+```C
 
 /* /include/linux/list.h */
 
@@ -69,7 +69,7 @@ struct super_block {
 
 ```
 还是以上面的超级块链表为例，看看这个链表的构建。
-```cpp
+```C
 
 /* /fs/super.c */
 
@@ -77,20 +77,20 @@ static LIST_HEAD(super_blocks);
 
 ```
 在super.c文件中，内核定义了一个static的全局变量 super_blocks。展开后的代码是这样：
-```cpp
+```C
 
 static struct list_head super_blocks = LIST_HEAD_INIT(super_blocks);
 
 ```
 继续展开，代码如下：
-```cpp
+```C
 
 static struct list_head super_blocks = { &(super_blocks), &(super_blocks) };
 
 ```
 可见，实际上，内核定义了一个 struct list_head 的变量 super_blocks，并且把 next 和 prev 字段都指向 super_blocks自己。
 这其实就是定义了一个**空链表super_blocks**：
-```cpp
+```C
 
 /* /include/linux/list.h */
 
@@ -107,7 +107,7 @@ static inline int list_empty(const struct list_head *head)
 list_empty接口就是通过判断 struct list_head 结构的 next 字段是否指向 链表对象本身，来判断该链表是否为空。
 
 除了通过 LIST_HEAD宏来初始化一个链表，内核还定义了一个 inline 函数 **INIT_LIST_HEAD**：
-```cpp
+```C
 
 /* /include/linux/list.h */
 
@@ -124,7 +124,7 @@ static inline void INIT_LIST_HEAD(struct list_head *list)
 **插入**
 
 内核实现了 list_add 和 list_add_tail 两个接口来在链表头和尾插入数据。
-```cpp
+```C
 
 /* /include/linux/list.h */
 
@@ -167,7 +167,7 @@ static inline void list_add_tail(struct list_head *new, struct list_head *head)
 
 ```
 实际上，内核的这个链表是循环链表，表头的next、prev分别指向链表中的第一个和最后一个node。比如，在mount的时候，内核会调用一个函数sget来查找或者创建一个超级块，并添加到super_blocks链表中。sget的定义如下：
-```cpp
+```C
 
 /* /fs/super.c */
 
@@ -202,7 +202,7 @@ super_blocks双向循环链表的示意图如下：
 
 ##### 如何访问内核的链表的数据项？
 内核定义了一系列的宏来访问链表数据，这些宏包括：**list_entry**, **list_first_entry**, **list_last_entry**, **list_first_entry_or_null**, **list_next_entry**, **list_prev_entry**等等。从名字基本可以看出它们的作用，**list_entry**是最基本的，其他几个宏都是在**宏list_entry**的基础上实现的。下面就分析**list_entry**是如何访问链表数据的。
-```cpp
+```C
 
 /* /include/linux/list.h */
 
@@ -217,7 +217,7 @@ super_blocks双向循环链表的示意图如下：
 
 ```
 **container_of**也是一个宏，其定义在kernel.h头文件中：
-```cpp
+```C
 
 /* /include/linux/kernel.h */
 
@@ -233,7 +233,7 @@ super_blocks双向循环链表的示意图如下：
 
 ```
 **offsetof**也是一个宏，其定义在stddef.h中：
-```cpp
+```C
 
 /* /include/linux/stddef.h */
 
@@ -254,7 +254,7 @@ super_blocks双向循环链表的示意图如下：
 container_of宏利用了typeof特性，typeof是 GNU C 提供的扩展特性（不属于ISO C 的特性），它可以获取一个表达式或者类型的类型（有点拗口？英文描述：typeof is used to refer to the type of a type or an expression.）。 container_of 把第一个参数ptr转换成第三个参数member的类型的指针，然后利用offsetof宏，利用结构体的字段偏移地址计算出包含ptr指向的对象的那个type对象的地址。
 
 到这里，就知道内核是如何访问链表数据项的了。比如我想访问super_blocks链表表头的s_dev字段：
-```cpp
+```C
 
 struct super_block * psb = list_entry(super_blocks.next, struct super_block, s_list);
 psb->s_dev;
@@ -264,7 +264,7 @@ psb->s_dev;
 
 ##### 如何遍历链表？
 内核中定义了一系列遍历链表的宏，比如向前遍历链表的 list_for_each，向后遍历链表的 list_for_each_prev：
-```cpp
+```C
 
 /* /include/linux/list.h */
 
@@ -286,7 +286,7 @@ psb->s_dev;
 
 ```
 可以看到，这些宏就是一个for循环。以遍历super_blocks为例，我们可以这样：
-```cpp
+```C
 
 struct list_head *iter = NULL;
 list_for_each(iter, &super_blocks) {
@@ -300,7 +300,7 @@ list_for_each(iter, &super_blocks) {
 也就是说我们通过list_for_each遍历链表，通过list_entry访问表项。为了简化我们上面的代码，内核同时定义了另外两个宏：
 
 可以看到，这些宏就是一个for循环。以遍历super_blocks为例，我们可以这样：
-```cpp
+```C
 
 /* /include/linux/list.h */
 
@@ -329,7 +329,7 @@ list_for_each(iter, &super_blocks) {
 ```
 利用上面的宏，我们的遍历代码可以更简洁一点：
 
-```cpp
+```C
 
 struct super_block *iter = NULL;
 list_for_each_entry(iter, &super_blocks, s_list) {
@@ -341,7 +341,7 @@ list_for_each_entry(iter, &super_blocks, s_list) {
 
 ##### 安全性问题
 上面的链表操作接口并没有考虑在并行执行的环境下的问题，因此实际上调用这些接口的地方应该自己保证正确地进行并行访问。实际上，以上面的超级块为例，内核在定义超级块链表super_blocks的同时，也定义了一个自旋锁sb_lock:
-```cpp
+```C
 
 /* /fs/super.c */
 
@@ -353,7 +353,7 @@ static DEFINE_SPINLOCK(sb_lock);
 内核在访问超级块链表的时候会对sb_lock加锁。
 
 虽然链表操作接口没有锁机制，不过内核还是定义了几个更安全的接口：
-```cpp
+```C
 
 /* /include/linux/list.h */
 

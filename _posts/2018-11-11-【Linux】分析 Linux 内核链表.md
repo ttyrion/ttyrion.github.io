@@ -343,7 +343,7 @@ list_for_each(iter, &super_blocks) {
 ```
 
 也就是说我们通过list_for_each遍历链表，通过list_entry访问表项。为了简化我们上面的代码，内核同时定义了另外两个宏：
-```
+
 可以看到，这些宏就是一个for循环。以遍历super_blocks为例，我们可以这样：
 ```cpp
 
@@ -430,7 +430,8 @@ static DEFINE_SPINLOCK(sb_lock);
 	for (pos = (head)->next, n = pos->next; pos != (head); \
 		pos = n, n = pos->next)
 
-/**
+/*
+
  * list_for_each_prev_safe - iterate over a list backwards safe against removal of list entry
 
  * @pos:	the &struct list_head to use as a loop cursor.
@@ -438,7 +439,7 @@ static DEFINE_SPINLOCK(sb_lock);
  * @n:		another &struct list_head to use as temporary storage
 
  * @head:	the head for your list.
- 
+
  */
 #define list_for_each_prev_safe(pos, n, head) \
 	for (pos = (head)->prev, n = pos->prev; \

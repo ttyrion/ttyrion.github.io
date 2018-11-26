@@ -13,7 +13,7 @@ tags:
 
 ### std::shared_ptr、std::weak_ptr 的类层次结构
 
-![UML图用astah UML制作](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/Cpp11/smart_pointers.png) 
+![UML图用astah UML制作](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/Cpp11/smart_pointer.png) 
 
 
 ### 模板基类 _Ptr_base

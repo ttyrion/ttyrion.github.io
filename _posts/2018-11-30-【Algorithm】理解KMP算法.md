@@ -42,14 +42,18 @@ int naive_find_first_of(const char *str, const char *pattern) {
 上面的Naive-String-Match算法的问题在于太“Naive”，埋头苦干（匹配），却没有利用每次匹配得到的信息。什么信息？下面就来说说。
 
 比如下面的一个字符串匹配过程：
+
 ![naivesort1](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/algorithm/kmp/naivesort1.png) 
+
 匹配si=6，pi=4时，发现 S[si+pi] != P[pi]，按照朴素匹配算法，则开始下一轮匹配，即si=7,pi=0,如下图：
+
 ![naivesort2](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/algorithm/kmp/naivesort2.png) 
 
 实际上，新的S[si+pi]和P[pi]肯定不能匹配，因为在之前的匹配中，已经知道S[si+pi]=S[7]='D'，且P[pi]=P[0]='C'。**Naive-String-Match** 没有利用这些已获知的信息。
 
 ### Knuth–Morris–Pratt algorithm
 应用KMP算法时，上面第一幅图中匹配失败时，会进行如下匹配：
+
 ![naivesort3](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/algorithm/kmp/naivesort3.png) 
 
 仔细对比，在KMP算法中，并非简单地把si自增1，pi设置为0，开始新一轮匹配。KMP算法根据已获知的信息，直接开始si=8，pi=2的匹配过程。**这个过程怎么发生的？** 就是我这里要说的重点。

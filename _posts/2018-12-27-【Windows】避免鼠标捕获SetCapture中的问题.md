@@ -9,7 +9,7 @@ catalog: true
 tags:
 ---
 
-> 鼠标捕获的解决方案是来自一篇英文博客，原文地址：http://www.drdobbs.com/avoiding-trouble-with-mouse-capture/184416474 。感谢Chris Branch。
+> 鼠标捕获的解决方案是来自一篇英文博客，原文地址：[avoiding-trouble-with-mouse-capture](http://www.drdobbs.com/avoiding-trouble-with-mouse-capture/184416474)   。感谢Chris Branch。
 
 #### 为什么需要捕获鼠标？
 做Windows上的客户端开发，不可避免地要处理各种消息，其中包括鼠标相关的消息。为了让一个窗口客户区可以被鼠标拖动，我在 **WM_LBUTTONDOWN** 消息处理时记录一个状态mouse_left_hould=true。在 **WM_MOUSEMOVE** 消息中，判断状态mouse_left_hould为true，则移动窗口到光标当前位置。在 **WM_LBUTTONUP** 消息中取消对鼠标的捕获，并把状态mouse_left_hould标记为false。

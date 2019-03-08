@@ -1,6 +1,6 @@
 ---
 layout:         page
-title:         【Mysql】设置远程连接Mysql数据库
+title:         【MySQL】设置远程连接Mysql数据库
 subtitle:       
 date:           2019-03-09
 author:         翼

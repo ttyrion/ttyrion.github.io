@@ -113,8 +113,55 @@ public (active)
 
 ```
 
+## start MySQL : MySQL5.7(zip) for Windows
+MySQL的zip格式安装包，解压即可用。假设解压到目录：C:\www\mysql-5.7.25-winx64：
+```JavaScript
+1. 配置环境变量 MYSQL_HOME:C:\www\mysql-5.7.25-winx64, 环境变量Path：%MYSQL_HOME%\bin;Path;
+
+2. 安装MySQL服务：以管理员身份打开命令行窗口，切换目录到%MYSQL_HOME%\bin，执行以下语句进行MySQL服务的安装：
+$ mysqld -install
+Service successfully installed.
+看到上面的输出，就表示安装成功，此时系统的“组件服务”中就能看到“MySQL”了。
+
+3. 此时启动mysqld会提示错误：
+mysqld: Can't change dir to 'C:\www\mysql-5.7.25-winx64\data\' (Errcode: 2 - No such file or directory)
+说明还没有初始化data目录，用以下命令初始化data：
+$ mysqld --initialize-insecure --user=root
+
+4. 现在可以启动MySQL服务了：
+$ net start mysql
+MySQL 服务正在启动 .
+MySQL 服务已经启动成功。
+
+5. 此时可以以root用户连接MySQL：
+$ mysql -u root
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 3
+Server version: 5.7.25 MySQL Community Server (GPL)
+
+Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql>
+
+上面没有输入密码，说明安装后的root初始密码为空。接下来给root设置新密码。
+
+6. 设置新密码：
+$ mysqladmin.exe  -u root -p password root123
+Enter password:
+mysqladmin: [Warning] Using a password on the command line interface can be insecure.
+Warning: Since password will be sent to server in plain text, use ssl connection to ensure password safety.
+
+-p password后面的root123是新密码，mysqladmin要求在Enter password:后面输入旧密码，因为root初始密码为空，
+这里我们直接回车即可给root设置新密码root123。
+
+```
 
 
-
-## Mysql rpm bundle for linux
+## MySQL rpm bundle for linux
 [download link](https://cdn.mysql.com//Downloads/MySQL-5.7/mysql-5.7.25-1.el7.x86_64.rpm-bundle.tar)

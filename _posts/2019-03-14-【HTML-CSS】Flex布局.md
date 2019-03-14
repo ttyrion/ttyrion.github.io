@@ -35,7 +35,9 @@ Flex容器默认存在两根轴：水平的主轴（**main axis**）和垂直的
 3. flex-flow
 4. justify-content
 5. align-items
+
 类似align-content等作用于多根轴线的属性，不多用，这里不提。
+
 ###### flex-direction
 flex-direction属性决定主轴的方向（即Flex容器内项目的排列方向）。
 ```JavaScript

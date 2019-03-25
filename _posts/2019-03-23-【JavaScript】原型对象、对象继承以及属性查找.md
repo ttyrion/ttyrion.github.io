@@ -68,5 +68,37 @@ derived
 上面的代码说明了：当修改了derived的x属性值之后，derived就有了一个x属性的副本。此后derived和base引用的对象的x属性就不会互相影响。所以即便是删除了base的x属性，derived的x属性依然可以正常访问。
 
 
+我们也可以在创建对象的同时就覆盖继承的属性。比如：
+```JavaScript
+
+var base = {
+  toString: function() {
+      return "[object Base]";
+  }  
+};
+
+var obj = Object.create(base, {
+    toString: {
+        value: function() {
+            return "[object Derived]"
+        },
+        writable: false,
+        enumerable: false,
+        configurable: false
+    }
+});
+
+console.log(base.toString());
+console.log(obj.toString());
+console.log(Object.prototype.toString.call(obj));
+
+// output
+[object Base]
+[object Derived]
+[object Object]
+
+```
+第二行console.log是为了证明对象（base）字面量也同样可以覆盖继承的属性：所有字面量对象都继承了Object.prototype原型对象的属性，包括toString。
+
 
 

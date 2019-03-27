@@ -1,6 +1,6 @@
 ---
 layout:         page
-title:         【JavaScript】数组的map、reduce方法分析及实现.md
+title:         【JavaScript】数组的map、reduce方法分析及实现
 subtitle:       
 date:           2019-03-24
 author:         翼

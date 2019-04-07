@@ -160,6 +160,9 @@ Warning: Since password will be sent to server in plain text, use ssl connection
 -p password后面的root123是新密码，mysqladmin要求在Enter password:后面输入旧密码，因为root初始密码为空，
 这里我们直接回车即可给root设置新密码root123。
 
+注意：mysql客户端登录以后也可以很便捷地设置新密码：
+mysql> set password=password('123456');
+
 ```
 
 

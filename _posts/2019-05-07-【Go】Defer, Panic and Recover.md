@@ -66,6 +66,7 @@ func CopyFile(destFile string, srcFile string) (written int64, err error) {
 
 ### Defer的三个简单规则
 defer语句的行为是可预测的，有三个简单的规则可应用于defer语句。
+
 **No.1 一个deferred函数的参数的值是在对defer语句求值时计算的**
 例如：
 ```javascript

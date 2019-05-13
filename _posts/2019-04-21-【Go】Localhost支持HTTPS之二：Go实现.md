@@ -117,7 +117,7 @@ server.key
 启动mmc命令，点击在“文件”菜单的“添加/删除管理单元”子菜单添加一个“证书”管理单元。随后就能在左侧“控制台根节点”下面看到“证书”一栏。在下面找到“受信任的根证书颁发机构”下面的“证书”，把我们的根证书rootCA.pem导入进去。至此，本地环境就会信任由此根证书颁发的任何SSL证书，包括我们用于本地网站调试的server.crt。
 
 ## 本地站点使用终端用户SSL证书
-```go
+```javascript
 
 router := mux.NewRouter()
 router.HandleFunc("/", Handler).Methods("GET")
@@ -134,7 +134,7 @@ if err != nil {
 启动服务就可在浏览器里面访问https://localhost来验证了。
 
 这里顺便说一下，我启动服务器出现如下错误：
-```go
+```javascript
 
 listen tcp 127.0.0.1:443: bind: An attempt was made to access a socket in a way forbidden by its access permissions.
 

@@ -15,7 +15,7 @@ tags:
 defer语句把一条函数调用放到一个队列，并且遵从LIFO。保存在队列里的函数调用在外围函数返回后执行。defer语句通常用于简化清理操作。
 
 先看如下一段代码：
-```go
+```javascript
 
 func CopyFile(destFile string, srcFile string) (written int64, err error) {
     src, err := os.Open(srcFile)
@@ -38,7 +38,7 @@ func CopyFile(destFile string, srcFile string) (written int64, err error) {
 上面这段代码很简单，却有一个bug：如果os.Create失败，src就不会被关闭。我们可以很简单地加入一行src.Close()解决问题。但是假如是在一个复杂函数内部，有很多失败条件判断，那就需要在那些地方都加上src.Close()，并且当函数代码很多时，如果漏掉一个src.Close()，也可能不会被发现。
 
 换作使用defer的代码：
-```go
+```javascript
 
 func CopyFile(destFile string, srcFile string) (written int64, err error) {
     src, err := os.Open(srcFile)
@@ -68,7 +68,7 @@ func CopyFile(destFile string, srcFile string) (written int64, err error) {
 defer语句的行为是可预测的，有三个简单的规则可应用于defer语句。
 **No.1 一个deferred函数的参数的值是在对defer语句求值时计算的**
 例如：
-```go
+```javascript
 
 func Test() int {
 	i := 0;
@@ -87,7 +87,7 @@ func main() {
 
 ```
 输出如下:
-```go
+```javascript
 in Test: i= 1
 in defer: i= 0
 in main: i= 1
@@ -95,7 +95,7 @@ in main: i= 1
 可见，在执行defer语句的过程中，deferred函数的参数i的值已经计算出来了，并不是等到该函数被执行时才去计算。这是合理的，拿上面CopyFile为例，假如deferred函数的参数是在它被执行时才计算，那如果src被修改，原先被打开的src文件就肯定不会被关闭。显然，这是不严谨的！
 
 这里还有另外一种变体：
-```go
+```javascript
 
 func Test() int {
 	i := 0;
@@ -114,7 +114,7 @@ func main() {
 
 ```
 输出如下:
-```go
+```javascript
 in Test: i= 1
 in defer: i= 1
 in main: i= 1
@@ -125,7 +125,7 @@ in main: i= 1
 
 **No.3 deferred函数可以访问外围函数的命名的返回变量。**
 假设有一个第三方包里面的函数process：
-```go
+```javascript
 
 func process(s string) int {
 	return 10 / len(s)
@@ -134,7 +134,7 @@ func process(s string) int {
 ```
 
 我们需要用这个函数，但是这个函数可能会发生异常（Go里面称为panic）。我们想在这个函数panic的时候捕获它，并且返回一个错误给外部。可能的代码如下：
-```go
+```javascript
 
 func myProcess(s string) error {
 	var err error
@@ -152,7 +152,7 @@ func myProcess(s string) error {
 ```
 
 下面是验证的代码：
-```go
+```javascript
 func main() {
 	err := myProcess("")
 	if err != nil {
@@ -161,7 +161,7 @@ func main() {
 }
 ```
 它的输出如下：
-```go
+```javascript
 
 panic caught in myProcess.
 
@@ -170,7 +170,7 @@ panic caught in myProcess.
 
 **为什么会这样？**
 咋看起来，好像是myProcess最后返回了在其内部第一行定义的err。但事实是在process **panic**时，程序根本不会执行到myProcess内部return err那一行代码。添加一行代码即可证明：
-```go
+```javascript
 func myProcess(s string) error {
 	var err error
 	defer func() {
@@ -190,7 +190,7 @@ func myProcess(s string) error {
 
 **如何解决我们这个问题呢？**
 答案就是使用**命名的**返回变量。下面是新版的myProcess代码：
-```go
+```javascript
 
 func myProcess(s string) (err error) {
 	defer func() {
@@ -207,7 +207,7 @@ func myProcess(s string) (err error) {
 
 ```
 现在程序的输出变为：
-```go
+```javascript
 
 panic caught in myProcess.
 in main:  process error

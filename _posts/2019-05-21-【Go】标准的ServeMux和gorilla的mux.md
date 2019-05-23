@@ -26,7 +26,7 @@ tags:
 
 ##### 模式：固定的根路径和带根的子树
 上面已经说过这两个模式是不同的，接下来上代码。
-```go
+```javascript
 // package handler
 func HandleDefault(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("OK"))
@@ -60,7 +60,7 @@ if err != nil {
 ##### 1. 灵活的请求URL路径匹配方式
 ###### 1.1 普通的路径模式注册URL
 package mux也支持标准的http.ServeMux所支持的注册模式，但有些不同。
-```go
+```javascript
 
 func HandleProduct(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("OK"))
@@ -96,7 +96,7 @@ r.Schemes("https")
 r.Headers("X-Requested-With", "XMLHttpRequest")
 
 ##### 2. 请求URL的host, path, query values 可以包含变量以及正则表达式
-```go
+```javascript
 
 func HandleProduct(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
@@ -131,7 +131,7 @@ func main() {
 这个貌似不常用，以后用到再说。
 
 ##### 4. 子Routes
-```go
+```javascript
 
 func main() {
     router := mux.NewRouter()

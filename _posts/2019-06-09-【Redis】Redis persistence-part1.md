@@ -1,6 +1,6 @@
 ---
 layout:         page
-title:         Redis persistence -part1
+title:         【Redis】Redis persistence-part1
 subtitle:       
 date:           2019-06-09
 author:         翼

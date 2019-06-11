@@ -227,3 +227,49 @@ WORKDIR
 当与上述命令组合使用时，ONBUILD也支持环境变量。
 
 #### .dockerignore file
+在将context发送给docker daemon之前，docker CLI 会先查看context根目录下的.dockerignore文件。如果存在这样一个文件，CLI 会修改context：排除相应的文件和目录。这防止把不必要的或敏感的内容发送到docker daemon，这还可能导致这些不必要的内容被 ADD 或者 COPY 命令添加到镜像中。
+
+.dockerignore文件的每一行都会被CLI视为一个模式。为了匹配模式，context的根目录会被同时当作工作目录和根目录。举例来说，模式/foo/bar和foo/bar都会排除PATH或者URL指定的git仓库的根目录的foo子目录中的名为bar的文件或者目录。
+
+.dockerignore中以#作为第一个字符开头的行，会被当作注释。注释行在CLI解释.dockerignore之前就会被忽略。
+
+比如下面这个.dockerignore文件：
+```javascript
+
+# comment
+*/temp*
+*/*/temp*
+temp?
+
+```
+此文件引起的build行为如下：
+```javascript
+
+1. # comment
+忽略。
+
+2. */temp*
+排除root目录的直接子目录内的名字以temp开头的文件和目录。
+比如文件/somedir/temporary.txt会被排除，目录/somedir/temp也会被排除。
+
+3. */*/temp*
+排除root目录的二级子目录内的名字以temp开头的文件和目录。
+比如文件/somedir/subdir/temporary.txt会被排除。
+
+4. temp?
+排除root目录中名字以temp开头，结尾是任意单个字符的文件或者目录。
+比如文件/tempa和目录/tempb会被排除。
+```
+模式匹配是根据Go的filepath.Match的规则来处理的。还有一个预处理的步骤，它根据filepath.Clean的规则，将开头和结尾的空白字符去掉，并且清除 . 和 .. 。
+
+除了Go的filepath.Match规则，Docker还支持一个特殊的通配符"**"，可以匹配任意数量的目录。比如，模式 \*\*/*.go 将排除所有目录（包括build context的根目录）中的所有名字以.go结尾的文件。
+
+以'!'开头的行，可以用作排除项的例外项。比如：
+```javascript
+
+    *.md
+    !README.md
+
+```
+所有的markdown文件，除了README.md，都会从context中排除。
+

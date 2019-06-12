@@ -94,7 +94,7 @@ docker命令并不区分大小写。不过，习惯上使用大写的命令以�
 # Comment
 RUN echo 'we are running some # of cool things'
 ```
-##### Parser directives
+#### Parser directives
 解析预处理器是可选的，并且它会影响Dockerfile文件中后续的行被处理的方式。预处理器并不会在构建镜像的过程中增加层，也不会显示为构建的一个步骤。预处理器以一种特殊的注释的形式书写：
 ```javascript
 # directive=value
@@ -120,7 +120,7 @@ FROM ImageName
 
 有以下可用的预处理器：
 
-###### Parser directives：escape
+##### Parser directives：escape
 escape预处理器设置作为转义字符的字符，默认的转义字符是'\\'。
 ```javascript
 # escape=\ (backslash)
@@ -247,8 +247,8 @@ FROM命令初始化新的构建阶段（build stage），并且**为后续的命
 3. 可以通过给FROM命令添加一个 AS name, 来给新的构建阶段一个可选的名字。这个名字可以被后续的 FROM 和 COPY --from=<name|index> 命令用来引用当前阶段构建出的镜像。
 4. tag和digest值是可选的。如果你忽略了其中一个值，构建过程会使用默认tag值：latest。
 
-##### FROM：Understand how ARG and FROM interact
-
+#### FROM：Understand how ARG and FROM interact
+略过
 
 #### RUN
 RUN有两种形式：
@@ -449,7 +449,7 @@ COPY命令接收可选的 --from=\<name|index\> 标志，该标志用于设置�
 
 **COPY遵循与ADD类似的规则。**但是，COPY不能作用于URL，也不能解压tar文档。详情参看原文。
 
-##### 补充：ADD 与 COPY
+#### 补充：ADD 与 COPY
 COPY与ADD的区别是：ADD支持获取远端URL资源，并且解压tar资源。通常从构建context中复制资源（文件、目录）推荐使用COPY（个人认为这个命令名称更符合语义）。ADD命令擅长获取URL资源以及解压tar文档。
 
 
@@ -471,7 +471,7 @@ shell形式的ENTRYPOINT命令会屏蔽所有CMD命令和 docker run 指定的�
 
 Dockerfile文件中，只有最后一个ENTRYPOINT命令是有效的。
 
-##### ENTRYPOINT：Exec form ENTRYPOINT example
+#### ENTRYPOINT：Exec form ENTRYPOINT example
 你可以使用ENTRYPOINT命令的exec形式来设置相当稳定的默认程序和参数。还能再用CMD命令的任一形式来设置额外的更可能变化的默认值。
 ```javascript
 FROM ubuntu
@@ -576,7 +576,7 @@ sys	0m 0.03s
 1. exec形式也会被当作JSON数组解析，因此每个单词得使用双引号。
 1. exec形式不会启动shell。具体参考上面RUN命令。
 
-##### ENTRYPOINT：Shell form ENTRYPOINT example
+#### ENTRYPOINT：Shell form ENTRYPOINT example
 你可以给ENTRYPOINT指定一个字符串，该字符串将被以 /bin/sh -c 的形式执行。这种形式将使用shell处理来替代shell环境变量，并且忽略CMD命令以及 docker run 的命令行参数。为了确保 docker stop 能正确地给长时间运行的ENTRYPOINT可执行程序发送信号，你得记得用exec来启动它：
 ```javascript
 FROM ubuntu
@@ -632,7 +632,7 @@ user	0m 0.04s
 sys	0m 0.03s
 ```
 
-##### Understand how CMD and ENTRYPOINT interact
+#### Understand how CMD and ENTRYPOINT interact
 CMD和ENTRYPOINT命令都能指定在容器运行时将运行什么程序。这里是几条描述CMD和ENTRYPOINT协作的规则：
 1. Dockerfile应该至少通过CMD或ENTRYPOINT声明一个可执行程序。
 1. 当把容器作为可执行程序时，要声明ENTRYPOINT命令。
@@ -658,7 +658,7 @@ VOLUME /myvol
 ```
 这个Dockerfile文件将生成一个镜像，这个镜像将使 docker run 在容器的/myvol处创建一个挂载点，并且把镜像文件系统中的greeting文件拷贝到这个新创建的卷中。
 
-##### VOLUME：Notes about specifying volumes
+#### VOLUME：Notes about specifying volumes
 关于Dockerfile中的卷（volumes），需要记住以下内容：
 1. 基于Windows的容器...(正式生产环境不会用，略过)
 1. 在声明了volume之后的构建步骤中对volume内数据所做的修改，都会被丢弃。
@@ -707,7 +707,7 @@ ARG user1
 ARG buildno
 ...
 ```
-##### ARG：Default values
+#### ARG：Default values
 ARG命令可以（可选择的）指定一个默认参数值：
 ```javascript
 FROM busybox
@@ -717,7 +717,7 @@ ARG buildno=1
 ```
 如果ARG命令指定了参数的默认值并且构建时用户没有传递参数值，构建过程将使用默认值。
 
-##### ARG：Scope
+#### ARG：Scope
 ARG命令定义的变量从ARG命令所在的行开始生效，而不是使用参数的命令行或者其他地方。比如这个Dockerfile：
 ```javascript
 1 FROM busybox
@@ -742,7 +742,7 @@ ARG SETTINGS
 RUN ./run/other $SETTINGS
 ```
 
-##### ARG：Using ARG variables
+#### ARG：Using ARG variables
 你可以使用ARG以及ENV命令来为RUN命令指定可用的变量。ENV命令定义的环境变量总是会覆盖ARG命令定义的同名变量。如：
 ```javascript
 1 FROM ubuntu
@@ -758,7 +758,7 @@ $ docker build --build-arg CONT_IMG_VER=v2.0.1 .
 
 **与ARG不同，ENV命令定义的环境变量将永远存在于构建的镜像中。**（在容器运行时，依然能够访问到构建镜像时由ENV定义的环境变量）
 
-##### ARG：Predefined ARGs
+#### ARG：Predefined ARGs
 Docker有一些预定义的ARG变量，你可以在Dockerfile中直接使用，而不需要使用ARG定义：
 ```javascript
 HTTP_PROXY
@@ -776,7 +776,7 @@ no_proxy
 ```
 详情参看原文。
 
-##### ARG：Impact on build caching
+#### ARG：Impact on build caching
 ARG变量不会像ENV变量那样存在于最终生成的镜像中。然后，ARG变量以类似的方式影响着构建缓存。
 
 详情参考原文。

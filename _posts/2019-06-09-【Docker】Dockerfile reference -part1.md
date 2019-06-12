@@ -688,3 +688,143 @@ WORKDIR /path/to/workdir
 WORKDIR命令给（Dockerfile中）随后的RUN, CMD, ENTRYPOINT, COPY 和 ADD 命令设置工作目录。如果WORKDIR不存在，就会被创建出来，尽管可能后面的命令并不使用它。
 
 一个Dockerfile中可以使用多个WORKDIR命令。如果命令中使用相对路径，则这个路径将相对于上一个WORKDIR命令。
+
+WORKDIR命令能够解析此前由ENV命令设置的环境变量，并且你只能使用Dockerfile中显示设置了的环境变量。
+
+#### ARG
+```javascript
+ARG <name>[=<default value>]
+```
+ARG命令可以定义一个变量，其变量值可由用户在构建时通过 docker build 命令的 --build-arg \<varname\>=\<value\> 标记来传递。如果用户指定了一个Dockerfile并未定义的变量，构建过程会输出警告日志：
+```javascript
+[Warning] One or more build-args [foo] were not consumed.
+```
+
+一个Dockerfile可以包含多个ARG命令。比如，下面这是一个有效的Dockerfile：
+```javascript
+FROM busybox
+ARG user1
+ARG buildno
+...
+```
+##### ARG：Default values
+ARG命令可以（可选择的）指定一个默认参数值：
+```javascript
+FROM busybox
+ARG user1=someuser
+ARG buildno=1
+...
+```
+如果ARG命令指定了参数的默认值并且构建时用户没有传递参数值，构建过程将使用默认值。
+
+##### ARG：Scope
+ARG命令定义的变量从ARG命令所在的行开始生效，而不是使用参数的命令行或者其他地方。比如这个Dockerfile：
+```javascript
+1 FROM busybox
+2 USER ${user:-some_user}
+3 ARG user
+4 USER $user
+```
+用户这样构建镜像：
+```javascript
+$ docker build --build-arg user=what_user .
+```
+第2行的user的值是some_user，因为user变量此时还没定义。第4行的user的值是what_user，因为命令行参数传递了值what_user。在ARG命令定义变量之前使用这个变量，其值都会被当作是空字符串。
+
+ARG命令的作用域在它所在的构建阶段结束时结束。如果要在多个构建阶段中使用一个变量，每个阶段都必须包含ARG命令。
+```javascript
+FROM busybox
+ARG SETTINGS
+RUN ./run/setup $SETTINGS
+
+FROM busybox
+ARG SETTINGS
+RUN ./run/other $SETTINGS
+```
+
+##### ARG：Using ARG variables
+你可以使用ARG以及ENV命令来为RUN命令指定可用的变量。ENV命令定义的环境变量总是会覆盖ARG命令定义的同名变量。如：
+```javascript
+1 FROM ubuntu
+2 ARG CONT_IMG_VER
+3 ENV CONT_IMG_VER v1.0.0
+4 RUN echo $CONT_IMG_VER
+```
+假设构建时使用如下的命令：
+```javascript
+$ docker build --build-arg CONT_IMG_VER=v2.0.1 .
+```
+在这个例子中，RUN命令中使用v1.0.0作为变量值，而不是用户传的v2.0.1。
+
+**与ARG不同，ENV命令定义的环境变量将永远存在于构建的镜像中。**（在容器运行时，依然能够访问到构建镜像时由ENV定义的环境变量）
+
+##### ARG：Predefined ARGs
+Docker有一些预定义的ARG变量，你可以在Dockerfile中直接使用，而不需要使用ARG定义：
+```javascript
+HTTP_PROXY
+http_proxy
+HTTPS_PROXY
+https_proxy
+FTP_PROXY
+ftp_proxy
+NO_PROXY
+no_proxy
+```
+要使用这些变量，只需通过命令行flag传递：
+```javascript
+--build-arg <varname>=<value>
+```
+详情参看原文。
+
+##### ARG：Impact on build caching
+ARG变量不会像ENV变量那样存在于最终生成的镜像中。然后，ARG变量以类似的方式影响着构建缓存。
+
+详情参考原文。
+
+
+#### STOPSIGNAL
+STOPSIGNAL命令设置将发送给容器以便退出的系统信号。信号可以是一个有效的无符号整数并且要能匹配上内核的系统调用表的某个位置，比如9；或者是格式如SIGNAME的信号名，如SIGKILL。
+
+#### HEALTHCHECK
+HEALTHCHECK命令有两种形式：
+```javascript
+HEALTHCHECK [OPTIONS] CMD command (check container health by running a command inside the container)
+HEALTHCHECK NONE (disable any healthcheck inherited from the base image)
+```
+HEALTHCHECK命令告诉Docker如何去测试一个容器来检查该容器是否还在工作。这种方式可以检测到一些问题，如一个web服务器卡在一个无限循环中而不能处理新连接，尽管服务进程还在运行。
+
+当一个容器配置了健康检查时，除了“正常”状态之外，它还多了一个“健康”状态。这个状态初始化时是**starting**，当通过健康检查后，状态变为**healthy**（不论此前是什么状态）。当连续经过特定次数的失败后，状态就变为**unhealthy**。
+
+可以出现在CMD之前的选项有：
+```javascript
+--interval=DURATION (default: 30s)
+--timeout=DURATION (default: 30s)
+--start-period=DURATION (default: 0s)
+--retries=N (default: 3)
+```
+健康检查在容器启动后**interval**秒后首次进行，然后在每次检查完成后过**interval**秒再次进行健康检查。
+
+如果某单次检查耗时超过**timeout**秒，则此次检查被视为失败。
+
+当连续的**retries**次检查都失败时，这个容器的状态就被视为**unhealthy**。
+
+**start period** 为需要引导时间的容器（container that needs time to bootstrap）提供初始化时间：在此期间的探测失败将不被计入最大重试次数retries。然后，如果在启动阶段（**start period**）内有一次健康检查成功了，那容器就被认为已经完成启动，并且随后的失败的检查将被计入最大重试次数。
+
+每个Dockerfile文件中只能出现一个HEALTHCHECK命令。如果在一个Dockerfile中出现多个HEALTHCHECK命令，只有最后一个会生效。
+
+CMD关键字后面的可执行程序可以是shell命令（如 HEALTHCHECK CMD /bin/check-running），或者一个exec数组（类似Dockerfile的其他命令；详情请参考ENTRYPOINT）。
+shell命令的退出状态用于标识容器的健康状态。可能的值有：
+```javascript
+0: success - the container is healthy and ready for use
+1: unhealthy - the container is not working correctly
+2: reserved - do not use this exit code
+```
+
+例如，每5分钟检查一个web服务器是否能在3秒内响应对其主页面的请求：
+```javascript
+HEALTHCHECK --interval=5m --timeout=3s \
+  CMD curl -f http://localhost/ || exit 1
+```
+为了辅助调试探测失败的问题，shell命令写入 stdout 或者 stderr 的任何文本（UTF-8编码）将被保存在健康状态中，并且能够通过 docker inspect 来查询。这种输出应该保持精简（只有最开始的4096字节会被保存）。当容器的健康状态发生变化时，会产生一个标识新状态的health_status事件。
+
+HEALTHCHECK特性是在 Docker 1.12 中加入的。

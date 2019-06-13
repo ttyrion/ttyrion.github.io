@@ -642,6 +642,26 @@ CMD和ENTRYPOINT命令都能指定在容器运行时将运行什么程序。这�
 下面的表格展示了不同的ENTRYPOINT / CMD组合时，将执行什么可执行程序：
 ![ENTRYPOINT-CMD.png](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/docker/ENTRYPOINT-CMD.png) 
 
+#### 推荐做法
+推荐使用ENTRYPOINT命令来设置容器启动时执行的可执行程序，并且通过CMD命令来给entry point设置默认参数。这种情况下，容器启动时会以 PID 1 来运行entry point。并且，我们可以通过 docker run 来修改entry point的参数（而不是使用CMD命令设置的默认值）。还有一个好处是，docker run \<image\> 时可以不指定任何可执行程序，即把容器本身作为可执行程序（此时使用CMD设置的默认参数运行entry point）。
+
+这里需要注意的是，ENTRYPOINT命令自己也能给 entry point 可执行程序指定参数。并且，ENTRYPOINT指定的参数是固定不变的。CMD命令指定的默认参数会追加在ENTRYPOINT参数之后。而 docker run 传递的参数只能（也一定会）覆盖CMD命令指定的参数： docker run 传递了哪怕只有一个参数，也会覆盖CMD命令指定的所有参数。如：
+```javascript
+...
+CMD ["defaultx", "defaulty"]
+ENTRYPOINT ["echo", "entry"]
+...
+```
+按不同方式运行容器：
+...
+[root@local test]# docker run test
+entry defaultx defaulty
+
+[root@local test]# docker run test pass1
+entry pass1
+...
+```
+
 
 #### VOLUME
 ```javascript

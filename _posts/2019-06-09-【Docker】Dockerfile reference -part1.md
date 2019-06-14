@@ -1,6 +1,6 @@
 ---
 layout:         page
-title:         【Docker】Dockerfile reference
+title:         【Docker】Dockerfile reference -part1
 subtitle:       
 date:           2019-06-09
 author:         翼
@@ -9,7 +9,7 @@ catalog: true
 tags:
 ---
 
-> 这篇文章翻译自Docker官网。原文链接在[这里](https://docs.docker.com/v17.09/engine/reference/builder/)
+> 这篇文章的主要内容是翻译自Docker官网。原文链接在[这里](https://docs.docker.com/v17.09/engine/reference/builder/)
 
 Docker可以自动读取一个Dockerfile中的指令来构建镜像（build images）。一个Dockerfile就是一个文本文件，里面包含着用户通过命令行集成镜像时可以调用的一切命令。用户可以执行 docker build 来创建一个连续地执行多条命令行指令的自动构建过程。
 

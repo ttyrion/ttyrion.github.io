@@ -64,4 +64,4 @@ chrome-tab-theme-color: "#000000"
 service-worker: true
 
 # Friends
-theme: jekyll-theme-time-machine
+theme: jekyll-theme-hacker

@@ -15,19 +15,19 @@ Context定义在context包中。
 ```go
 
 // A Context carries a deadline, a cancellation signal(actually an empty struct passed by channel), 
-//    and other values across API boundaries.
+//	and other values across API boundaries.
 // Context's methods may be called by multiple goroutines simultaneously.
 type Context interface {
-    // Deadline returns the time when work (which done on behalf of this context) should be canceled.
-    // Deadline returns ok==false when no deadline is set. 
+	// Deadline returns the time when work (which done on behalf of this context) should be canceled.
+	// Deadline returns ok==false when no deadline is set. 
 	Deadline() (deadline time.Time, ok bool)
 
-    // Done returns a channel that's closed when work (which done on behalf of this context) should be canceled. 
-    // Done may return nil if this context can never be canceled(ie, Done would block forever). 
+	// Done returns a channel that's closed when work (which done on behalf of this context) should be canceled. 
+	// Done may return nil if this context can never be canceled(ie, Done would block forever). 
 
 	// WithCancel() arranges for Done to be closed when cancel is called;
-    // WithDeadline() arranges for Done to be closed when the deadline expires; 
-    // WithTimeout() arranges for Done to be closed when the timeout elapses.
+	// WithDeadline() arranges for Done to be closed when the deadline expires; 
+	// WithTimeout() arranges for Done to be closed when the timeout elapses.
 
 	// 可见Done()返回的类型被定义为一个只读通道，并且只作为“信号”使用（struct{}）
 	Done() <-chan struct{}
@@ -95,8 +95,10 @@ func WithValue(parent Context, key interface{}, val interface{}) Context
 
 ```
 
+
+
 #### Context的应用
-##### 1. 通知子操作取消执行
+#### 1. 通知子操作取消执行
 这里定义了一个测试接口：
 ```go
 var BP *blueprint.Blueprint
@@ -184,7 +186,8 @@ getData: process cancelled
 
 另外，调用WithCancel或者WithTimeout方法返回的CancelFunc，也可以**主动发送取消信号**。
 
-##### 2. 超时设置
+
+#### 2. 超时设置
 下面利用Context来设置对外请求的超时处理。
 ```go
 

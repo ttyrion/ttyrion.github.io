@@ -189,6 +189,7 @@ getData: process cancelled
 ```go
 
 func HTTPGet(url string, timeoutMs int) ([]byte, error, int) {
+	// 生产环境不能这么用，详情参考另外一篇《Go并发模式：http.Client和TIME_WAIT连接的故事》
 	client := &http.Client{}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -196,7 +197,8 @@ func HTTPGet(url string, timeoutMs int) ([]byte, error, int) {
 		return nil, err, http.StatusInternalServerError
 	}
 
-	ctx,_ := context.WithTimeout(context.Background(), time.Duration(timeoutMs) * time.Millisecond)
+	ctx,cancel := context.WithTimeout(context.Background(), time.Duration(timeoutMs) * time.Millisecond)
+	defer cancel()
 	req = req.WithContext(ctx)
 	
 	req.Header.Set("Accept-Encoding", "gzip")

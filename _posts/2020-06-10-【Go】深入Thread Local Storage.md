@@ -102,7 +102,7 @@ thread_context_ptr是FS指向的数据的地址。这条mov指令执行完之后
 
 ### The Internals of ELF TLS
 不同的平台和体系结构下，TLS/TCB的结构也有所不同。对于x86-64，其TLS结构如图：
-![tls](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/tls/tls-structure.png)
+![tls](https://raw.githubusercontent.com/ttyrion/ttyrion.github.io/master/image/go/tls/tls-structure.png)
 
 这张图包含了很多信息：
 1. $tp_t$是线程寄存器（即线程t的线程指针，thread pointer，也是FS存储的数据）。

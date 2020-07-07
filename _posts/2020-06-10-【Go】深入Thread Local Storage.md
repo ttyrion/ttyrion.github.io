@@ -68,14 +68,14 @@ EAX = *main_tls_var_ptr;
 ```
 thread_context_ptr是FS指向的数据的地址。这条mov指令执行完之后，eax寄存器存储了main_tls_var的值。
 
-在x86-64平台上，用户态进程（Ring 3）可以取FS和GS的值，但是不能修改FS和GS中存储的地址值。通常是由操作系统提供一些设施（如**系统调用**）来间接操作FS和GS。内核通Model Specific Register (MSR) 来管理FS中存储的地址值，称为[MSR_FS_BASE](https://elixir.bootlin.com/linux/v4.18.20/source/arch/x86/include/asm/msr-index.h#L18)。内核提供系统调用[arch_prctl](https://elixir.bootlin.com/linux/v4.18.20/source/arch/x86/kernel/process_64.c#L627)来修改当前运行线程的FS和GS寄存器的值。
+在x86-64平台上，用户态进程（Ring 3）可以取FS和GS的值，但是不能修改FS和GS中存储的地址值。通常是由操作系统提供一些设施（如**系统调用**）来间接操作FS和GS。内核通过Model Specific Register (MSR) 来管理FS中存储的地址值，称为[MSR_FS_BASE](https://elixir.bootlin.com/linux/v4.18.20/source/arch/x86/include/asm/msr-index.h#L18)。内核提供系统调用[arch_prctl](https://elixir.bootlin.com/linux/v4.18.20/source/arch/x86/kernel/process_64.c#L627)来修改**当前运行线程**的FS和GS寄存器的值。
 
-深挖进去的话，我们还能看到，当内核进行上下文切换（[context switch](https://elixir.bootlin.com/linux/v4.18.20/source/arch/x86/kernel/process_64.c#L418)）的时候，负责切换的代码会加载下一个任务的FS到CPU的MSR中，确保不论FS中的地址处的数据是什么，它都是基于每个线程的（不是在线程间共享的）。
+深挖进去的话，我们还能看到，当内核进行**上下文切换**（[context switch](https://elixir.bootlin.com/linux/v4.18.20/source/arch/x86/kernel/process_64.c#L418)）的时候，负责切换的代码会加载下一个任务的FS到CPU的MSR中（**即，也切换FS寄存器的值**），确保不论FS中的地址处的数据是什么，它都是基于每个线程的（不是在线程间共享的）。
 
 基于以上内容，我们可以作出猜测：运行时（runtime）必须通过某种FS操作子程序的方式（如arch_prctl）来把TLS绑定到当前线程。并且，内核在进行上下文切换的时候交换正确的FS值，以此来追踪这个绑定关系。
 
 ### Thread Specific Context
-上面提到了，FS指向的数据，是某种特定于线程的上下文。那么，这个上下文到底是什么呢？
+上面提到了，FS指向的数据，是某种特定于线程的上下文。那么，这个**上下文到底是什么**呢？
 
 不同的平台对这个上下文有着不同的称呼。在Linux和glibc下，它被称为Thread Control Block (**TCB**)；在Windows中，它被称为Thread Information Block (**TIB**) or Thread Environment Block (**TEB**)。
 
@@ -85,14 +85,14 @@ thread_context_ptr是FS指向的数据的地址。这条mov指令执行完之后
 
 对于“x86-64 Linux + glibc”，TCB的数据结构其实就是struct pthread，有时也称为线程描述符；它是glibc内部的一种数据结构，与POSIX线程相关，但是不完全一样。
 
-至此，我们已经知道了：FS寄存器指向的是一个TCB数据结构。但是还有一些问题未解，例如：TCB是谁分配以及设置的？我们编写代码的时候，显然没有在源码里面处理TCB相关的事情。
+至此，我们已经知道了：FS寄存器指向的是一个TCB数据结构(这个也就是**线程上下文**)。但是还有一些问题未解，例如：TCB是谁分配以及设置的？我们编写代码的时候，显然没有在源码里面处理TCB相关的事情。
 
 ### The Initialisation of TCB or TLS
 对于静态链接或动态链接的可执行程序，TCB或者TLS的设置过程是有些不同的。至于原因，后面会讲清楚。目前，我们先专注于动态链接的可执行程序的TCB设置的过程，因为人们发布软件的最常用的方式就是动态链接。更复杂的是，主线程与随后创建的其他线程初始化TLS的过程也不相同。显然，主线程是内核启动的，而其他线程是应用程序运行之后启动的。
 
-对于动态链接的ELF程序，只要它们被加载、映射进内存，内核就会撒手不管，并将指挥棒交给动态链接器（Linux系统中是ld.so，macOS中是dyld）。ld.so是glibc的一部分，所以接下来我们要剖开glibc的内部，看看能否找到一些有用的东西。
+对于动态链接的ELF程序，只要它们被加载、映射进内存，内核就会撒手不管，并将指挥棒交给**动态链接器**（Linux系统中是ld.so，macOS中是dyld）。ld.so是glibc的一部分，所以接下来我们要剖开glibc的内部，看看能否找到一些有用的东西。
 
-我们此前做了一个假设：runtime将调用arch_prctl系统调用来修改FS寄存器。我们可以试试在glibc源码中搜索arch_prctl来看看。排除掉几处不太可能的代码之后，我们看到一个宏定义[TLS_INIT_TP](https://sourceware.org/git/?p=glibc.git;a=blob;f=sysdeps/x86_64/nptl/tls.h;h=e88561c93412489e532af8e388a8eeb1f879b771;hb=437faa9675dd916ac7b239d4584b932a11fbb984#l154) 这个宏使用内联汇编的方式触发arch_prctl系统调用并且更新FS寄存器的值为TCB的地址。
+我们此前做了一个假设：runtime将调用arch_prctl系统调用来修改FS寄存器。我们可以试试在glibc源码中搜索arch_prctl来看看。排除掉几处不太可能的代码之后，我们看到一个宏定义[TLS_INIT_TP](https://sourceware.org/git/?p=glibc.git;a=blob;f=sysdeps/x86_64/nptl/tls.h;h=e88561c93412489e532af8e388a8eeb1f879b771;hb=437faa9675dd916ac7b239d4584b932a11fbb984#l154) 。这个宏使用内联汇编的方式触发arch_prctl系统调用并且更新FS寄存器的值为TCB的地址。
 
 知道了TLS_INIT_TP，通过搜索TLS_INIT_TP可以发现，主线程的TLS是通过函数[init_tls](https://sourceware.org/git/?p=glibc.git;a=blob;f=elf/rtld.c;h=1b0c74739f967093d26f5867b9b9d552d8b1ad00;hb=437faa9675dd916ac7b239d4584b932a11fbb984#l681)设置的。init_tls调用_dl_allocate_tls_storage来分配TCB（即struct pthread），最后调用宏TLS_INIT_TP来将这个TCB绑定至主线程。
 

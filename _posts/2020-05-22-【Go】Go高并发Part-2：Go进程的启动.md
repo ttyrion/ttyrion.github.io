@@ -61,7 +61,10 @@ TEXT main(SB),NOSPLIT,$0
     JMP    runtime·rt0_go(SB)
 
 ```
-可见，这个main函数也很简单， 它只是调用了runtime·rt0_go函数。这个函数是汇编代码实现的，以AMD64平台为例，入口函数的定义在runtime/asm_amd64.s文件里面。下面是摘取出的部分代码，只保留关键流程的代码：
+可见，这个main函数也很简单， 它只是调用了runtime·rt0_go函数。
+
+##### 1. 设置goroutine栈边界
+这个函数是汇编代码实现的，以AMD64平台为例，入口函数的定义在runtime/asm_amd64.s文件里面。下面是摘取出的部分代码，只保留关键流程的代码：
 ```go
 
 TEXT runtime·rt0_go(SB),NOSPLIT,$0
@@ -110,8 +113,9 @@ the second refers to the hardware’s SP register.
 
 回到上面那段代码。那段代码就是把全局变量runtime.g0的地址存入DI寄存器(runtime.g0是进程第一个goroutine)，接着就设置了g0的栈的边界。
 
-
-    // find out information about the processor we're on
+##### 2. 判断当前系统的处理器
+```go
+// find out information about the processor we're on
     MOVQ    $0, AX
     CPUID
     MOVQ    AX, SI
@@ -129,59 +133,19 @@ the second refers to the hardware’s SP register.
     JNE    notintel
     MOVB    $1, runtime·lfenceBeforeRdtsc(SB)
 notintel:
+...
 
-    // Load EAX=1 cpuid flags
-    MOVQ    $1, AX
-    CPUID
-    MOVL    CX, runtime·cpuid_ecx(SB)
-    MOVL    DX, runtime·cpuid_edx(SB)
+...
 
-    // Load EAX=7/ECX=0 cpuid flags
-    CMPQ    SI, $7
-    JLT    no7
-    MOVL    $7, AX
-    MOVL    $0, CX
-    CPUID
-    MOVL    BX, runtime·cpuid_ebx7(SB)
-no7:
-    // Detect AVX and AVX2 as per 14.7.1  Detection of AVX2 chapter of [1]
-    // [1] 64-ia-32-architectures-software-developer-manual-325462.pdf
-    // http://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-manual-325462.pdf
-    MOVL    runtime·cpuid_ecx(SB), CX
-    ANDL    $0x18000000, CX // check for OSXSAVE and AVX bits
-    CMPL    CX, $0x18000000
-    JNE     noavx
-    MOVL    $0, CX
-    // For XGETBV, OSXSAVE bit is required and sufficient
-    XGETBV
-    ANDL    $6, AX
-    CMPL    AX, $6 // Check for OS support of YMM registers
-    JNE     noavx
-    MOVB    $1, runtime·support_avx(SB)
-    TESTL   $(1<<5), runtime·cpuid_ebx7(SB) // check for AVX2 bit
-    JEQ     noavx2
-    MOVB    $1, runtime·support_avx2(SB)
-    JMP     testbmi1
-noavx:
-    MOVB    $0, runtime·support_avx(SB)
-noavx2:
-    MOVB    $0, runtime·support_avx2(SB)
-testbmi1:
-    // Detect BMI1 and BMI2 extensions as per
-    // 5.1.16.1 Detection of VEX-encoded GPR Instructions,
-    //   LZCNT and TZCNT, PREFETCHW chapter of [1]
-    MOVB    $0, runtime·support_bmi1(SB)
-    TESTL   $(1<<3), runtime·cpuid_ebx7(SB) // check for BMI1 bit
-    JEQ     testbmi2
-    MOVB    $1, runtime·support_bmi1(SB)
-testbmi2:
-    MOVB    $0, runtime·support_bmi2(SB)
-    TESTL   $(1<<8), runtime·cpuid_ebx7(SB) // check for BMI2 bit
-    JEQ     nocpuinfo
-    MOVB    $1, runtime·support_bmi2(SB)
-nocpuinfo:    
-    
-    // if there is an _cgo_init, call it.
+nocpuinfo: 
+
+```
+接下来一段代码是判断当前处理器类型，如果是Intel，就设置runtime·lfenceBeforeRdtsc标记。这段代码不影响对进程启动的理解，因此不仔细分析了。
+
+##### 3. 初始化cgo
+接下来一段代码是当启用cgo时才会执行的一段代码，包括初始化，设置栈空间等等。
+```go
+// if there is an _cgo_init, call it.
     MOVQ    _cgo_init(SB), AX
     TESTQ    AX, AX
     JZ    needtls
@@ -200,6 +164,12 @@ nocpuinfo:
 #ifndef GOOS_windows
     JMP ok
 #endif
+
+```
+
+##### 4. 设置TLS
+```go
+
 needtls:
 #ifdef GOOS_plan9
     // skip TLS setup on Plan 9
@@ -220,6 +190,38 @@ needtls:
     CMPQ    AX, $0x123
     JEQ 2(PC)
     MOVL    AX, 0    // abort
+
+```
+这段代码负责仅在系统支持TLS的时候设置TLS以及确保TLS正常工作。设置TLS最关键的就是这两行代码：
+```go
+LEAQ    runtime·m0+m_tls(SB), DI
+CALL    runtime·settls(SB)
+
+```
+LEAQ把runtime·m0+m_tls的地址，也就是runtime·m0.tls的地址存入DI寄存器。CALL调用runtime·settls设置TLS。settls是汇编实现的，源码在[sys_linux_amd64.s](https://github.com/golang/go/blob/master/src/runtime/sys_linux_amd64.s#L638):
+```go
+// set tls base to DI
+TEXT runtime·settls(SB),NOSPLIT,$32
+#ifdef GOOS_android
+	// DI currently holds m->tls, which must be fs:0x1d0.
+	// See cgo/gcc_android_amd64.c for the derivation of the constant.
+	SUBQ	$0x1d0, DI  // In android, the tls base 
+#else
+	ADDQ	$8, DI	// ELF wants to use -8(FS)
+#endif
+	MOVQ	DI, SI
+	MOVQ	$0x1002, DI	// ARCH_SET_FS
+	MOVQ	$158, AX	// arch_prctl
+	SYSCALL
+	CMPQ	AX, $0xfffffffffffff001
+	JLS	2(PC)
+	MOVL	$0xf1, 0xf1  // crash
+	RET
+
+```
+从注释中也能看到，settls函数进行arch_prctl系统调用来设置FS寄存器，并且传了参数ARCH_SET_FS以及DI+8。
+    
+    
 ok:
     // set the per-goroutine and per-mach "registers"
     get_tls(BX)

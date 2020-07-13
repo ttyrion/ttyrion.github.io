@@ -39,9 +39,9 @@ start address 0x0000000000454b70
   454b79:    cc                       int3   
 
 ```
-根据反汇编的结果可以看到，在我这台开发机上，Go启动的入口是**_rt0_amd64_linux**。
+根据反汇编的结果可以看到，在我这台开发机上，Go启动的入口是 **_rt0_amd64_linux**。
 
-已知进程启动入口是_rt0_amd64_linux，查看源码可以看到该函数代码：
+已知进程启动入口是 _rt0_amd64_linux，查看源码可以看到该函数代码：
 ```go
 // rt0_linux_amd64.s
 
@@ -61,21 +61,21 @@ TEXT main(SB),NOSPLIT,$0
     JMP    runtime·rt0_go(SB)
 
 ```
-可见，这个main函数也很简单， 它只是调用了runtime·rt0_go函数。
+可见，这个main函数也很简单， 它只是调用了runtime.rt0_go函数。这个函数是汇编代码实现的，以AMD64平台为例，入口函数的定义在runtime/asm_amd64.s文件里面。下面是摘取出的部分代码，只保留关键流程的代码。
 
-##### 1. 设置goroutine栈边界
-这个函数是汇编代码实现的，以AMD64平台为例，入口函数的定义在runtime/asm_amd64.s文件里面。下面是摘取出的部分代码，只保留关键流程的代码：
+##### 1. 设置g0栈
 ```go
 
 TEXT runtime·rt0_go(SB),NOSPLIT,$0
     // create istack out of the given (operating system) stack.
     // _cgo_init may update stackguard.
     MOVQ    $runtime·g0(SB), DI
+    // 注意栈内存是从高地址空间向低地址空间扩展
     LEAQ    (-64*1024+104)(SP), BX
-    MOVQ    BX, g_stackguard0(DI)
-    MOVQ    BX, g_stackguard1(DI)
-    MOVQ    BX, (g_stack+stack_lo)(DI)
-    MOVQ    SP, (g_stack+stack_hi)(DI)
+    MOVQ    BX, g_stackguard0(DI)      // g0.stackguard0 = SP + (-64*1024+104)
+    MOVQ    BX, g_stackguard1(DI)      // g0.stackguard1 = SP + (-64*1024+104)
+    MOVQ    BX, (g_stack+stack_lo)(DI) // g0.stack.lo    = SP + (-64*1024+104)
+    MOVQ    SP, (g_stack+stack_hi)(DI) // g0.stack.hi    = SP
 ```
 这里用到了Go的4个伪寄存器之一的SB寄存器。
 ```go
@@ -112,6 +112,12 @@ the second refers to the hardware’s SP register.
 ```
 
 回到上面那段代码。那段代码就是把全局变量runtime.g0的地址存入DI寄存器(runtime.g0是进程第一个goroutine)，接着就设置了g0的栈的边界。
+
+```go
+g0:
+
+
+```
 
 ##### 2. 判断当前系统的处理器
 ```go
@@ -167,7 +173,7 @@ nocpuinfo:
 
 ```
 
-##### 4. 设置TLS
+##### 4. 设置 m0 主线程TLS
 ```go
 
 needtls:
@@ -180,16 +186,16 @@ needtls:
     JMP ok
 #endif
 
-    LEAQ    runtime·m0+m_tls(SB), DI
+    LEAQ    runtime·m0+m_tls(SB), DI   // DI = &(m0.tls)
     CALL    runtime·settls(SB)
 
     // store through it, to make sure it works
     get_tls(BX)
     MOVQ    $0x123, g(BX)
     MOVQ    runtime·m0+m_tls(SB), AX
-    CMPQ    AX, $0x123
+    CMPQ    AX, $0x123                // 判断 TLS 是否设置成功 
     JEQ 2(PC)
-    MOVL    AX, 0    // abort
+    MOVL    AX, 0    // abort         // 使用 INT 指令执行中断
 
 ```
 这段代码负责仅在系统支持TLS的时候设置TLS以及确保TLS正常工作。设置TLS最关键的就是这两行代码：
@@ -198,7 +204,7 @@ LEAQ    runtime·m0+m_tls(SB), DI
 CALL    runtime·settls(SB)
 
 ```
-LEAQ把runtime·m0+m_tls的地址，也就是runtime·m0.tls的地址存入DI寄存器。CALL调用runtime·settls设置TLS。settls是汇编实现的，源码在[sys_linux_amd64.s](https://github.com/golang/go/blob/master/src/runtime/sys_linux_amd64.s#L638):
+LEAQ把runtime.m0+m_tls的地址，也就是m0.tls的地址存入DI寄存器。CALL调用runtime·settls设置TLS。settls是汇编实现的，源码在[sys_linux_amd64.s](https://github.com/golang/go/blob/master/src/runtime/sys_linux_amd64.s#L638):
 ```go
 // set tls base to DI
 TEXT runtime·settls(SB),NOSPLIT,$32
@@ -219,7 +225,8 @@ TEXT runtime·settls(SB),NOSPLIT,$32
 	RET
 
 ```
-从注释中也能看到，settls函数进行arch_prctl系统调用来设置FS寄存器，并且传了参数ARCH_SET_FS以及DI+8。
+从注释中也能看到，settls函数进行arch_prctl系统调用来设置FS寄存器，并且传了参数ARCH_SET_FS以及DI+8(FS的值是DI+8，也就是TCB地址，)。根据注释，ELF将-8(FS)作为主线程的静态TLS地址。
+经过这一番设置之后，主线程TCB地址就是m0.tls的地址+8，所以主线程静态TLS地址就是 **&m0.tls**。
     
     
 ok:

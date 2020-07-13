@@ -10,6 +10,86 @@ tags:
 
 https://toutiao.io/posts/1o7pvc/preview
 
+#### G的结构体定义
+```go
+// stack结构描述的是一个Go的运行栈，栈内存空间范围是[lo, hi)
+type stack struct {
+	lo uintptr
+	hi uintptr
+}
+
+type g struct {
+	// Stack parameters.
+	// stack describes the actual stack memory: [stack.lo, stack.hi).
+	// stackguard0 is the stack pointer compared in the Go stack growth prologue.
+	// It is stack.lo+StackGuard normally, but can be StackPreempt to trigger a preemption.
+	// stackguard1 is the stack pointer compared in the C stack growth prologue.
+	// It is stack.lo+StackGuard on g0 and gsignal stacks.
+	// It is ~0 on other goroutine stacks, to trigger a call to morestackc (and crash).
+	stack       stack   // offset known to runtime/cgo
+	stackguard0 uintptr // offset known to liblink
+	stackguard1 uintptr // offset known to liblink
+
+	_panic         *_panic // innermost panic - offset known to liblink
+	_defer         *_defer // innermost defer
+	m              *m      // current m; offset known to arm liblink
+	stackAlloc     uintptr // stack allocation is [stack.lo,stack.lo+stackAlloc)
+	sched          gobuf
+	syscallsp      uintptr        // if status==Gsyscall, syscallsp = sched.sp to use during gc
+	syscallpc      uintptr        // if status==Gsyscall, syscallpc = sched.pc to use during gc
+	stkbar         []stkbar       // stack barriers, from low to high (see top of mstkbar.go)
+	stkbarPos      uintptr        // index of lowest stack barrier not hit
+	stktopsp       uintptr        // expected sp at top of stack, to check in traceback
+	param          unsafe.Pointer // passed parameter on wakeup
+	atomicstatus   uint32
+	stackLock      uint32 // sigprof/scang lock; TODO: fold in to atomicstatus
+	goid           int64
+	waitsince      int64  // approx time when the g become blocked
+	waitreason     string // if status==Gwaiting
+	schedlink      guintptr
+	preempt        bool     // preemption signal, duplicates stackguard0 = stackpreempt
+	paniconfault   bool     // panic (instead of crash) on unexpected fault address
+	preemptscan    bool     // preempted g does scan for gc
+	gcscandone     bool     // g has scanned stack; protected by _Gscan bit in status
+	gcscanvalid    bool     // false at start of gc cycle, true if G has not run since last scan; transition from true to false by calling queueRescan and false to true by calling dequeueRescan
+	throwsplit     bool     // must not split stack
+	raceignore     int8     // ignore race detection events
+	sysblocktraced bool     // StartTrace has emitted EvGoInSyscall about this goroutine
+	sysexitticks   int64    // cputicks when syscall has returned (for tracing)
+	traceseq       uint64   // trace event sequencer
+	tracelastp     puintptr // last P emitted an event for this goroutine
+	lockedm        *m
+	sig            uint32
+	writebuf       []byte
+	sigcode0       uintptr
+	sigcode1       uintptr
+	sigpc          uintptr
+	gopc           uintptr // pc of go statement that created this goroutine
+	startpc        uintptr // pc of goroutine function
+	racectx        uintptr
+	waiting        *sudog    // sudog structures this g is waiting on (that have a valid elem ptr); in lock order
+	cgoCtxt        []uintptr // cgo traceback context
+
+	// Per-G GC state
+
+	// gcRescan is this G's index in work.rescan.list. If this is
+	// -1, this G is not on the rescan list.
+	//
+	// If gcphase != _GCoff and this G is visible to the garbage
+	// collector, writes to this are protected by work.rescan.lock.
+	gcRescan int32
+
+	// gcAssistBytes is this G's GC assist credit in terms of
+	// bytes allocated. If this is positive, then the G has credit
+	// to allocate gcAssistBytes bytes without assisting. If this
+	// is negative, then the G must correct this by performing
+	// scan work. We track this in bytes to make it fast to update
+	// and check for debt in the malloc hot path. The assist ratio
+	// determines how this corresponds to scan work debt.
+	gcAssistBytes int64
+}
+```
+
 #### G的创建
 一条go语句会创建一个G。编译器最终把这样一条go语句转为调用runtime.newproc来创建G。代码如下：
 ```go

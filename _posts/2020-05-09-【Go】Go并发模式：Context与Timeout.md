@@ -1,6 +1,6 @@
 ---
 layout:         page
-title:          【Go】Go并发模式：Context
+title:          【Go】Go并发模式：Context与Timeout
 date:           2020-05-09
 author:         翼
 header-img: image/bg.jpg
@@ -259,3 +259,6 @@ HandleGet: <nil> 200
 
 ```
 说明请求https://blog.golang.org/context/google/google.go，在1000ms内处理完成了。
+
+#### Go标准包的TimeoutHandler
+Go标准http包提供了TimeoutHandler，它返回一个带超时的请求处理器，而它内部的超时，也是通过Context实现的。具体可参考源码 [server.go](https://golang.org/src/net/http/server.go):

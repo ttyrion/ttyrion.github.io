@@ -1,12 +1,23 @@
 ---
 layout:         page
-title:          【Go】Go进程的启动
+title:          【Go】Go高并发Part-2：Go进程的启动
 date:           2020-05-22
 author:         翼
 header-img: image/bg.jpg
 catalog: true
 tags:
 ---
+
+Go进程启动的流程可以概括为：
+1. call osinit
+1. call schedinit
+1. make & queue new G
+1. call runtime·mstart
+
+新创建的 G 负责调用 **runtime·main**。
+
+下面以反汇编的方式探索Go的这个启动流程。
+
 
 #### Go进程启动入口
 Go进程启动的入口，并不是main包的main函数。下面通过查看汇编代码，找到进程入口。
@@ -77,7 +88,7 @@ TEXT runtime·rt0_go(SB),NOSPLIT,$0
     MOVQ    BX, (g_stack+stack_lo)(DI) // g0.stack.lo    = SP + (-64*1024+104)
     MOVQ    SP, (g_stack+stack_hi)(DI) // g0.stack.hi    = SP
 ```
-这里用到了Go的4个伪寄存器之一的SB寄存器。
+这里用到了Go的4个伪寄存器之一的SB寄存器(关于Go的伪寄存器，可参考[golang asm](https://golang.org/doc/asm))。
 ```go
 // Go的4个伪寄存器
 FP(stack frame pointer) 栈帧指针。指向栈帧的底布。
@@ -190,6 +201,7 @@ needtls:
     CALL    runtime·settls(SB)
 
     // store through it, to make sure it works
+    // 测试TLS，确保值被正确写入了 m0.tls
     get_tls(BX)
     MOVQ    $0x123, g(BX)
     MOVQ    runtime·m0+m_tls(SB), AX
@@ -213,6 +225,7 @@ TEXT runtime·settls(SB),NOSPLIT,$32
 	// See cgo/gcc_android_amd64.c for the derivation of the constant.
 	SUBQ	$0x1d0, DI  // In android, the tls base 
 #else
+    // DI += 8; ie. DI = &m.tls[1]
 	ADDQ	$8, DI	// ELF wants to use -8(FS)
 #endif
 	MOVQ	DI, SI
@@ -225,46 +238,64 @@ TEXT runtime·settls(SB),NOSPLIT,$32
 	RET
 
 ```
-从注释中也能看到，settls函数进行arch_prctl系统调用来设置FS寄存器，并且传了参数ARCH_SET_FS以及DI+8(FS的值是DI+8，也就是TCB地址，)。根据注释，ELF将-8(FS)作为主线程的静态TLS地址。
-经过这一番设置之后，主线程TCB地址就是m0.tls的地址+8，所以主线程静态TLS地址就是 **&m0.tls**。
-    
-    
-ok:
-    // set the per-goroutine and per-mach "registers"
-    get_tls(BX)
-    LEAQ    runtime·g0(SB), CX
-    MOVQ    CX, g(BX)
-    LEAQ    runtime·m0(SB), AX
+从注释中也能看到，settls函数进行arch_prctl系统调用来设置FS寄存器，并且传了参数ARCH_SET_FS以及DI+8。根据注释，ELF将-8(FS)作为主线程的静态TLS地址。
+经过这一番设置之后，主线程FS寄存器的值就是m0.tls的地址+8，也就是 **&m0.tls[1]**。
 
-    // save m->g0 = g0
+##### 5. 关联m0与g0
+```go
+    get_tls(BX)                 // BX = &m0.tls[1]
+    LEAQ    runtime·g0(SB), CX  // CX = &g0
+    MOVQ    CX, g(BX)           
+    LEAQ    runtime·m0(SB), AX  // AX = &m0
+
+    // m0.g0 = g0
     MOVQ    CX, m_g0(AX)
-    // save m0 to g0->m
+    // g0.m = m0
     MOVQ    AX, g_m(CX)
 
-    CLD                // convention is D is always left cleared
-    CALL    runtime·check(SB)
+```
+关于get_tls的用法， golang官网有一段介绍：
+```go
+// Within the runtime, the get_tls macro loads its argument register with a pointer to the g pointer, 
+// and the g struct contains the m pointer. 
 
-    MOVL    16(SP), AX        // copy argc
-    MOVL    AX, 0(SP)
-    MOVQ    24(SP), AX        // copy argv
-    MOVQ    AX, 8(SP)
-    CALL    runtime·args(SB)
-    CALL    runtime·osinit(SB)
-    CALL    runtime·schedinit(SB)
+#include "go_tls.h"
+#include "go_asm.h"
 
+get_tls(CX)
+MOVL	g(CX), AX     // Move g into AX.
+MOVL	g_m(AX), BX   // Move g.m into BX.
+
+```
+**遗留问题：** 为什么g(BX)能取到g的地址？
+    
+##### 6. 系统初始化、调度初始化
+```go
+    MOVL	16(SP), AX		// copy argc
+    MOVL	AX, 0(SP)
+    MOVQ	24(SP), AX		// copy argv
+    MOVQ	AX, 8(SP)
+    CALL	runtime·args(SB)
+    CALL	runtime·osinit(SB)
+    CALL	runtime·schedinit(SB)
+
+```
+
+
+##### 7. 启动
+```go
     // create a new goroutine to start program
-    MOVQ    $runtime·mainPC(SB), AX        // entry
-    PUSHQ    AX
-    PUSHQ    $0            // arg size
-    CALL    runtime·newproc(SB)
-    POPQ    AX
-    POPQ    AX
+    MOVQ	$runtime·mainPC(SB), AX		// entry
+    PUSHQ	AX
+    PUSHQ	$0			// arg size
+    CALL	runtime·newproc(SB)
+    POPQ	AX
+    POPQ	AX
 
     // start this M
-    CALL    runtime·mstart(SB)
+    CALL	runtime·mstart(SB)
 
-    MOVL    $0xf1, 0xf1  // crash
+    MOVL	$0xf1, 0xf1  // crash
     RET
-
 
 ```

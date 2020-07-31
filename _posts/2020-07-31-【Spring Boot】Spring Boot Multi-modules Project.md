@@ -28,6 +28,8 @@ tags:
 
 ![maven_parent_project](https://github.com/ttyrion/Java/blob/master/doc/img/spring_boot/maven_parent_project.png)
 
+我这里主要是给parent pom添加了三个子模块：mm-application、mm-controller、mm-domain。其中mm-domain负责定义各种模型类；mm-controller负责定义各个Restful controllers，它依赖mm-domain中定义的模型；而mm-application包含启动服务的Main Class，它依赖mm-controller，mm-application会负责扫描mm-controller中定义的各个controllers。
+
 创建完各个子模块之后，接下来就需要编辑相关的pom了。
 
 #### 3. 修改pom配置

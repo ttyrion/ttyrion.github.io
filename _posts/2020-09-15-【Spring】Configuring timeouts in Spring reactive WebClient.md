@@ -215,3 +215,6 @@ private Mono<JsonNode> doGetWithDefaultConnectAndReadTimeOut(URI uri, long timeo
             .verify();
   }
 ```
+
+## 后记
+关于WebClient以及WebTestClient的用法，可以参考一下[spring-5-webclient](https://www.baeldung.com/spring-5-webclient)。

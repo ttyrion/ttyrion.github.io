@@ -1,6 +1,6 @@
 ---
 layout:         page
-title:          【Spring】Introduction to Spring Data MongoDB
+title:          【Spring】Introduction to Spring Data Redis
 date:           2020-09-15
 author:         翼
 header-img: image/bg.jpg
